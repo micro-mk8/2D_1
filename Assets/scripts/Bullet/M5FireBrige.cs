@@ -1,9 +1,16 @@
 using UnityEngine;
 
+
+
+
 public class M5FireBridge : MonoBehaviour
 {
     [SerializeField] private AllyBulletController controller;
     private string lastRaw;
+
+    [SerializeField] private GameFlowController gameFlowController; // ← 追加：インスペクタで割り当て
+    [SerializeField] private bool triggerStartRetryOnFire = true;   // ← 追加：FIREでStart/Retryを呼ぶか
+
 
     void Reset() { controller = GetComponent<AllyBulletController>(); }
 
@@ -21,5 +28,10 @@ public class M5FireBridge : MonoBehaviour
             controller.enableM5Fire = true;           // 事前トグルをON
             controller.FireStraightOnce_FromM5();     // 1発だけ発射
         }
+
+        // M5FireBridge 側：発射ボタンを検知した箇所で
+        if (triggerStartRetryOnFire && gameFlowController != null)
+            gameFlowController.StartOrRetry();
+
     }
 }

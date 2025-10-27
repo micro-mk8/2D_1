@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class PlayerRespawn : MonoBehaviour
 {
@@ -19,11 +20,30 @@ public class PlayerRespawn : MonoBehaviour
     [SerializeField] private Vector2 spawnPosition = Vector2.zero; // 復活位置（anchoredPosition）
     [SerializeField] private InvincibilityController invincibility; // ← 新規：同じPlayerRootに付ける
     [SerializeField, Min(0f)] private float defaultInvincibleSeconds = 2.0f; // ← 新規：省略時の既定秒
+    [SerializeField] private MonoBehaviour[] moverComponents; // PlayerMoverUI, PlayerMoverFromM5 などを割当
+
+
+    [Header("挙動切替")]
+    [SerializeField] private bool noRespawnMode = true;        // ★ これを true にすると“復活しない”モード
+    [SerializeField] private bool restoreHPOnDeath = true;     // ★ 死亡時にHP全回復するか（点滅中に被弾させないためtrue）
+
+    [Header("無敵中の射撃制御")]
+    [SerializeField] private MonoBehaviour[] fireComponents;   // ★ 無敵中に「enabled=false」にしたい射撃系スクリプト群
+    // 例：AllyBulletController / PlayerFireController / M5FireBridge（発射側）など
+
+    [Header("イベント")] 
+    public UnityEvent onGameOver;
+
+
+
+
 
     private float? nextInvincibleSecondsOverride = null; // ← 新規：次回だけ使う秒数（nullなら既定）
     private Vector2 lastDamagePosition;           // 直近の被弾時位置（＝死亡フレームも含む）
     private bool hasLastDamagePosition = false;
-
+    private Vector2 deathPosition;          
+    private bool hasDeathPosition      = false;
+    
     private int lives;
     private bool waitingRespawn = false;
 
@@ -72,54 +92,75 @@ public class PlayerRespawn : MonoBehaviour
     {
         if (waitingRespawn) return;
 
-        // 念のため“今”の位置も最後に更新（保険）
-        if (playerRoot)
-        {
-            lastAlivePosition = playerRoot.anchoredPosition;
-            hasLastAlivePosition = true;
-        }
-
         if (lives > 0)
         {
             lives--;
             if (hud) hud.SetLives(lives);
-            StartCoroutine(CoRespawn());
+
+            if (noRespawnMode)
+            {
+                // ★ 復活しないフローへ
+                StartCoroutine(CoNoRespawn());
+            }
+            else
+            {
+                // ★ 既存の復活フロー（残す）
+                //StartCoroutine(CoRespawn());
+            }
         }
         else
         {
-            // 残機ゼロ → ゲームオーバー（既存のまま）
+            // 残機ゼロ → ゲームオーバー（必要ならここに処理）
+            onGameOver?.Invoke();
         }
     }
 
-    private IEnumerator CoRespawn()
+
+    private IEnumerator CoNoRespawn()
     {
-        waitingRespawn = true;
+        // 位置は一切いじらない（テレポ無し）
 
-        yield return new WaitForSeconds(respawnDelay);
+        // HPをその場で回復（推奨：無敵中に再死亡しないため）
+        if (restoreHPOnDeath && playerHealth)
+            playerHealth.ResetHP();
 
-        if (playerRoot)
-        {
-            Vector2 respawnPos = spawnPosition;
-
-            // ★ 優先順位：被弾位置 → 最後の生存位置 → 既定スポーン
-            if (respawnAtLastPosition)
-            {
-                if (hasLastDamagePosition) respawnPos = lastDamagePosition;
-                else if (hasLastAlivePosition) respawnPos = lastAlivePosition;
-            }
-
-            playerRoot.anchoredPosition = respawnPos;
-        }
-
-        if (playerHealth) playerHealth.ResetHP();
-
-        // （既存）無敵時間の開始はそのまま
+        // 無敵時間（可変指定に対応）
         float useInvSec = nextInvincibleSecondsOverride ?? defaultInvincibleSeconds;
         nextInvincibleSecondsOverride = null;
-        if (invincibility != null) invincibility.Begin(useInvSec);
 
-        waitingRespawn = false;
+        // 無敵中は射撃を停止（移動は可）
+        SetFiringEnabled(false);
+
+        // 無敵開始（点滅・当たり無効は既存のイベント連携で作動）
+        if (invincibility)
+            invincibility.Begin(useInvSec);
+
+        // 無敵時間だけ待つ
+        yield return new WaitForSeconds(useInvSec);
+
+        // 無敵終了後、射撃を再開
+        SetFiringEnabled(true);
     }
+
+    private void SetMoversEnabled(bool enabled)
+    {
+        if (moverComponents == null) return;
+        foreach (var m in moverComponents)
+            if (m) m.enabled = enabled;
+    }
+
+
+
+    private void SetFiringEnabled(bool enabled)
+    {
+        if (fireComponents == null) return;
+        foreach (var c in fireComponents)
+            if (c) c.enabled = enabled;
+    }
+
+
+
+
 
     // ステージ開始時に呼ぶ初期化のとこ
     public void ResetLivesAndRespawnNow(int setLives, Vector2 setSpawn)
@@ -137,6 +178,18 @@ public class PlayerRespawn : MonoBehaviour
         nextInvincibleSecondsOverride = Mathf.Max(0f, seconds);
     }
 
+     private void LateUpdate()
+    {
+        if (waitingRespawn) return;
+        if (!playerHealth || playerHealth.CurrentHP <= 0) return;
+        if (!playerRoot) return;
+
+        lastAlivePosition = playerRoot.anchoredPosition;
+        hasLastAlivePosition = true;
+    }
+
+
 }
+
 
 
