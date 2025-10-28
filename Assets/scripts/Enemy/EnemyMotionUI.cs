@@ -1,53 +1,87 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Canvas/UI( RectTransform ) —p‚ÌƒGƒlƒ~[ˆÚ“®ƒRƒ“ƒ|[ƒlƒ“ƒgi’e‚â“–‚½‚è”»’è‚Í–³‚µjB
-/// Œ´ˆÄ‚Ìu“®‚«v•”•ª‚Ì‚İ‚ğÄŒ»‚µ‚â‚·‚¢‘ã•\ƒpƒ^[ƒ“‚ğ Inspector ‚©‚ç‘I‚×‚Ü‚·B
-/// ƒvƒŒƒCƒGƒŠƒA‚Í UI ã‚Ì anchoredPosition ‚ğ—p‚¢‚ÄˆÚ“®‚µ‚Ü‚·B
-/// </summary>
 [RequireComponent(typeof(RectTransform))]
 public class EnemyMotionUI : MonoBehaviour
 {
     public enum MovePattern
     {
-        Straight,       // ˆê’è•ûŒü‚Ö’¼i
-        HorizontalSine, // X‚Éi‚İ‚Â‚ÂY‚ğƒTƒCƒ“”g‚Å—h‚ç‚·i‰¡ˆÚ“®{c—h‚êj
-        VerticalSine,   // Y‚Éi‚İ‚Â‚ÂX‚ğƒTƒCƒ“”g‚Å—h‚ç‚·icˆÚ“®{‰¡—h‚êj
-        FigureEight,    // ‚»‚Ìê‚Å8‚ÌšiƒŠƒT[ƒWƒ…j
-        Waypoints       // •¡”“_‚ğ‡‚ÉˆÚ“®iƒ‹[ƒv‰Âj
+        Straight,
+        HorizontalSine,
+        VerticalSine,
+        FigureEight,
+        Waypoints
     }
 
-    [Header("Šî–{")]
+    [Header("åŸºæœ¬")]
     [SerializeField] private MovePattern pattern = MovePattern.HorizontalSine;
-    [SerializeField] private float speedPxPerSec = 260f; // Šî–{ˆÚ“®‘¬“xipx/sj
-    [Tooltip("Straight ‚Ìis•ûŒüBHorizontalSine/VerticalSine‚Å‚Íå²‚ÌisŒü‚«‚Ég—pB")]
-    [SerializeField] private Vector2 direction = new Vector2(-1f, 0f); // Šù’è‚Í¶‚Ö
+    [SerializeField] private float speedPxPerSec = 260f;
+    [Tooltip("Straight ã®é€²è¡Œæ–¹å‘ã€‚Horizontal/Vertical ã§ã¯ä¸»è»¸ã®ç¬¦å·ã«åˆ©ç”¨")]
+    [SerializeField] private Vector2 direction = new Vector2(-1f, 0f);
 
-    [Header("ƒTƒCƒ“”giHorizontal/Vertical —pj")]
-    [SerializeField] private float amplitudePx = 120f;   // —h‚ê•iƒs[ƒNj
-    [SerializeField] private float frequencyHz = 0.9f;   // —h‚êü”g”i1•b‚ ‚½‚èj
-    [SerializeField] private float phaseOffset = 0f;     // ‰ŠúˆÊ‘Šiƒ‰ƒWƒAƒ“j
+    [Header("ã‚µã‚¤ãƒ³æ³¢ï¼ˆHorizontal/Vertical ç”¨ï¼‰")]
+    [SerializeField] private float amplitudePx = 120f;
+    [SerializeField] private float frequencyHz = 0.9f;
+    [SerializeField] private float phaseOffset = 0f;
 
-    [Header("FigureEighti8‚Ìšj")]
-    [SerializeField] private float eightWidthPx = 140f;   // ‰¡•
-    [SerializeField] private float eightHeightPx = 90f;   // c•
-    [SerializeField] private float eightSpeedHz = 0.6f;   // ‰ñ‚é‘¬‚³iü‰ñ/•bj
-    [SerializeField] private float eightPhase = 0f;       // ‰ŠúˆÊ‘Š
+    [Header("FigureEightï¼ˆ8ã®å­—ï¼‰")]
+    [SerializeField] private float eightWidthPx = 140f;
+    [SerializeField] private float eightHeightPx = 90f;
+    [SerializeField] private float eightSpeedHz = 0.6f;
+    [SerializeField] private float eightPhase = 0f;
 
-    [Header("Waypointsiƒ[ƒJƒ‹À•WBRelative ‚Ìê‡‚Í‰ŠúˆÊ’u‚©‚ç‚Ì‘Š‘Îj")]
+    [Header("Waypointsï¼ˆãƒ­ãƒ¼ã‚«ãƒ«åº§æ¨™ã€‚Relative ã®å ´åˆã¯åˆæœŸä½ç½®ã‹ã‚‰ã®ç›¸å¯¾ï¼‰")]
     [SerializeField] private bool relativeWaypoints = true;
-    [SerializeField] private List<Vector2> waypoints = new List<Vector2>(); // PlayAreaFrame Šî€‚Ìƒ[ƒJƒ‹“_
-    [SerializeField] private bool loopWaypoints = true;
-    [SerializeField] private float arriveEps = 2f; // “’B”»’è‚µ‚«‚¢’l(px)
+    [SerializeField] private List<Vector2> waypoints = new List<Vector2>();
+    [SerializeField] private bool loopWaypoints = true;       // â† ã‚·ãƒ¼ã‚±ãƒ³ã‚µä½¿ç”¨æ™‚ã¯ false æ¨å¥¨
+    [SerializeField] private float arriveEps = 2f;
     [SerializeField] private float waitAtPointSec = 0f;
 
+    [Header("ã‚·ãƒ¼ã‚±ãƒ³ã‚¹åˆ¶å¾¡ï¼ˆå„è¡Œå‹•â†’åŸç‚¹ã¸æˆ»ã‚‹â†’ä¼‘æ­¢â†’æ¬¡è¡Œå‹•ï¼‰")]
+    [SerializeField] private bool useSequencer = true;
+    [Tooltip("å®Ÿè¡Œã™ã‚‹è¡Œå‹•ãƒ‘ã‚¿ãƒ¼ãƒ³ã®ä¸¦ã³ã€‚RandomizeãŒONãªã‚‰æ¯å›ãƒ©ãƒ³ãƒ€ãƒ é¸æŠ")]
+    [SerializeField] private MovePattern[] sequence = new MovePattern[] { MovePattern.HorizontalSine, MovePattern.FigureEight, MovePattern.Straight };
+    [SerializeField] private bool randomizeOrder = true;
+
+    [Tooltip("å„è¡Œå‹•ã‚’ä½•ç§’å®Ÿè¡Œã™ã‚‹ã‹ï¼ˆWaypointsã¯ã“ã®ç§’æ•°ã§æ‰“ã¡åˆ‡ã£ã¦ãƒªã‚¿ãƒ¼ãƒ³ï¼‰")]
+    [SerializeField, Min(0.1f)] private float patternDurationSec = 3.0f;
+
+    [Tooltip("åŸç‚¹ã¸æˆ»ã‚‹ã¨ãã®é€Ÿåº¦(px/s)")]
+    [SerializeField] private float returnSpeedPxPerSec = 420f;
+
+    [Tooltip("åŸç‚¹ã¸æˆ»ã£ãŸã‚ã¨ã€æ¬¡è¡Œå‹•ã«å…¥ã‚‹å‰ã®å¾…ã¡ç§’")]
+    [SerializeField] private float restAtStartSec = 0.4f;
+
+    [Tooltip("åŸç‚¹åˆ°é”ã¨åˆ¤å®šã™ã‚‹èª¤å·®(px)")]
+    [SerializeField] private float returnArriveEps = 1.5f;
+
+    [Header("ã‚¯ã‚¤ãƒƒã‚¯ä½œæˆï¼šä¸‰è§’ã‚¦ã‚§ã‚¤ãƒã‚¤ãƒ³ãƒˆï¼ˆWaypointsç”¨ï¼‰")]
+    [SerializeField] private float triangleRadius = 180f;   // åˆæœŸä½ç½®ã‚’å†…å¿ƒã¨ã—ã€æ­£ä¸‰è§’ã®é ‚ç‚¹ã¾ã§
+    [SerializeField] private float triangleRotateDeg = 0f;  // å›è»¢
+    [SerializeField] private bool overwriteWaypointsOnPlay = false;
+
+            // ===== åˆæœŸä½ç½®ã‚­ãƒ£ãƒ—ãƒãƒ£ =====
+    [Header("åˆæœŸä½ç½®ã‚­ãƒ£ãƒ—ãƒãƒ£")]
+    [SerializeField] private bool captureStartOnPlay = true;     // å†ç”Ÿé–‹å§‹æ™‚ã«ç¾åœ¨ä½ç½®ã‚’åˆæœŸä½ç½®ã¨ã—ã¦è¨˜éŒ²
+    [SerializeField] private bool lockStartAfterCapture = true;  // ä¸€åº¦è¨˜éŒ²ã—ãŸã‚‰ä»¥å¾Œã¯ä¸Šæ›¸ãã—ãªã„
+    private bool startCaptured = false;
+
+
+    [Header("é€Ÿåº¦ã‚¹ã‚±ãƒ¼ãƒ«")]
+    [SerializeField, Min(0f)] private float speedScale = 1f;  // â† ã“ã“ã‚’ 0.1ã€œ1.0 ãªã©ã§èª¿æ•´
+    private float S(float v) => v * speedScale;
+
     private RectTransform rect;
-    private Vector2 startPos;     // ŠJn‚Ì anchoredPosition
-    private Vector2 sineOffset;   // ƒTƒCƒ“•ª‚ÌƒIƒtƒZƒbƒg‚ğ·•ª“K—p‚·‚é‚½‚ß•Û
-    private float t;              // Œo‰ßŠÔ
-    private int wpIndex;          // Œ»İ‚ÌƒEƒFƒCƒ|ƒCƒ“ƒg
-    private float waitRemain;     // ƒEƒFƒCƒ|ƒCƒ“ƒg‚Å‚Ì‘Ò‹@c‚è
+    private Vector2 startPos;
+    private Vector2 sineOffset;
+    private float t;
+    private int wpIndex;
+    private float waitRemain;
+
+    private enum SeqState { PatternRunning, Returning, Resting }
+    private SeqState seq = SeqState.PatternRunning;
+    private float stateTimer = 0f;
+    private int seqIndex = 0;
 
     void Awake()
     {
@@ -56,71 +90,147 @@ public class EnemyMotionUI : MonoBehaviour
 
     void OnEnable()
     {
-        startPos = rect.anchoredPosition;
-        sineOffset = Vector2.zero;
-        t = 0f;
-        wpIndex = 0;
-        waitRemain = 0f;
+        rect = GetComponent<RectTransform>();
+
+        // â˜… ã“ã“ã§ç¾åœ¨ä½ç½®ã‚’åˆæœŸä½ç½®ã¨ã—ã¦è¨˜éŒ²
+        CaptureStartIfNeeded();
+
+        // ä»¥é™ã¯åˆæœŸä½ç½®ã‚’å¤‰ãˆãªã„å‰æã§å„çŠ¶æ…‹ã‚’åˆæœŸåŒ–
+        ResetPatternInternal();
+
+        if (overwriteWaypointsOnPlay && waypoints != null)
+        {
+            waypoints.Clear();
+            waypoints.AddRange(BuildTriangleWaypoints(triangleRadius, triangleRotateDeg));
+        }
+
+        if (useSequencer && sequence != null && sequence.Length > 0)
+            pattern = sequence[seqIndex % sequence.Length];
+
+        seq = useSequencer ? SeqState.PatternRunning : SeqState.PatternRunning;
+        stateTimer = 0f;
     }
 
     void Update()
     {
         float dt = Time.deltaTime;
-        t += dt;
 
+        if (!useSequencer)
+        {
+            RunPattern(dt);
+            return;
+        }
+
+        switch (seq)
+        {
+            case SeqState.PatternRunning:
+                stateTimer += dt;
+                RunPattern(dt);
+                if (stateTimer >= patternDurationSec)
+                {
+                    seq = SeqState.Returning;
+                    stateTimer = 0f;
+                }
+                break;
+
+            case SeqState.Returning:
+                Vector2 pos = rect.anchoredPosition;
+                Vector2 toStart = startPos - pos;
+                float dist = toStart.magnitude;
+                if (dist <= returnArriveEps)
+                {
+                    rect.anchoredPosition = startPos;
+                    ResetPatternInternal();
+                    seq = SeqState.Resting;
+                    stateTimer = 0f;
+
+                    if (sequence != null && sequence.Length > 0)
+                    {
+                        if (randomizeOrder)
+                        {
+                            pattern = sequence[Random.Range(0, sequence.Length)];
+                        }
+                        else
+                        {
+                            seqIndex = (seqIndex + 1) % sequence.Length;
+                            pattern = sequence[seqIndex];
+                        }
+                    }
+                    break;
+                }
+                Vector2 step = toStart.normalized * S(returnSpeedPxPerSec) * dt;
+                if (step.magnitude > dist) step = toStart;
+                rect.anchoredPosition = pos + step;
+                break;
+
+            case SeqState.Resting:
+                stateTimer += dt;
+                if (stateTimer >= restAtStartSec)
+                {
+                    // æ¬¡ã®è¡Œå‹•ã¸
+                    seq = SeqState.PatternRunning;
+                    stateTimer = 0f;
+                }
+                break;
+        }
+    }
+
+    private void RunPattern(float dt)
+    {
         switch (pattern)
         {
             case MovePattern.Straight:
                 MoveStraight(dt);
                 break;
-
             case MovePattern.HorizontalSine:
                 MoveHorizontalSine(dt);
                 break;
-
             case MovePattern.VerticalSine:
                 MoveVerticalSine(dt);
                 break;
-
             case MovePattern.FigureEight:
                 MoveFigureEight();
                 break;
-
             case MovePattern.Waypoints:
                 MoveWaypoints(dt);
                 break;
         }
     }
 
-    // ===== ƒpƒ^[ƒ“À‘• =====
+    private void ResetPatternInternal()
+    {
+        // â˜… å„è¡Œå‹•ã®ã‚¹ã‚¿ãƒ¼ãƒˆåœ°ç‚¹ã¯å¸¸ã«åˆæœŸä½ç½®
+        rect.anchoredPosition = startPos;
+        sineOffset = Vector2.zero;
+        t = 0f; wpIndex = 0; waitRemain = 0f;
+    }
+
 
     private void MoveStraight(float dt)
     {
         Vector2 dir = direction.sqrMagnitude > 0f ? direction.normalized : Vector2.left;
-        rect.anchoredPosition += dir * speedPxPerSec * dt;
+        rect.anchoredPosition += dir * S(speedPxPerSec) * dt;
+
     }
 
     private void MoveHorizontalSine(float dt)
     {
-        // å²‚ÍXBdir‚Ì•„†‚Å¶‰E‚Ç‚¿‚ç‚Öi‚Ş‚©‚ğŒˆ‚ß‚é
-        float vx = (direction.x >= 0f ? 1f : -1f) * speedPxPerSec;
-        // ƒTƒCƒ“‚ÍY‚É‚©‚¯‚éi·•ª“K—p‚ÅƒhƒŠƒtƒg‚ğ–h‚®j
+        float vx = (direction.x >= 0f ? 1f : -1f) * S(speedPxPerSec);
         float omega = 2f * Mathf.PI * frequencyHz;
         float yNow = amplitudePx * Mathf.Sin(omega * t + phaseOffset);
 
-        // ’¼‘O‚ÌƒIƒtƒZƒbƒg‚Æ‚Ì·•ª‚¾‚¯‘«‚·
         Vector2 baseMove = new Vector2(vx * dt, 0f);
         Vector2 newSine = new Vector2(0f, yNow);
         Vector2 delta = baseMove + (newSine - sineOffset);
 
         rect.anchoredPosition += delta;
         sineOffset = newSine;
+        t += dt;
     }
 
     private void MoveVerticalSine(float dt)
     {
-        // å²‚ÍYBdir‚Ì•„†‚Åã‰º‚Ç‚¿‚ç‚Öi‚Ş‚©‚ğŒˆ‚ß‚é
-        float vy = (direction.y >= 0f ? 1f : -1f) * speedPxPerSec;
+        float vy = (direction.y >= 0f ? 1f : -1f) * S(speedPxPerSec);
         float omega = 2f * Mathf.PI * frequencyHz;
         float xNow = amplitudePx * Mathf.Sin(omega * t + phaseOffset);
 
@@ -130,15 +240,16 @@ public class EnemyMotionUI : MonoBehaviour
 
         rect.anchoredPosition += delta;
         sineOffset = newSine;
+        t += dt;
     }
 
     private void MoveFigureEight()
     {
-        // ’†S‚ÍŠJnˆÊ’uBƒŠƒT[ƒWƒ…‚Å8‚Ìš: x=A sin(w t + ƒÓ), y=B sin(2 w t + ƒÓ)
-        float w = 2f * Mathf.PI * eightSpeedHz;
+        float w = 2f * Mathf.PI * (eightSpeedHz * speedScale); 
         float x = eightWidthPx * Mathf.Sin(w * t + eightPhase);
         float y = eightHeightPx * Mathf.Sin(2f * w * t + eightPhase);
         rect.anchoredPosition = startPos + new Vector2(x, y);
+        t += Time.deltaTime;
     }
 
     private void MoveWaypoints(float dt)
@@ -152,7 +263,7 @@ public class EnemyMotionUI : MonoBehaviour
         }
 
         Vector2 target = waypoints[wpIndex];
-        if (relativeWaypoints) target = startPos + target; // ŠJnˆÊ’u‚ğŠî€‚É‘Š‘Îw’è
+        if (relativeWaypoints) target = startPos + target;
 
         Vector2 pos = rect.anchoredPosition;
         Vector2 to = target - pos;
@@ -160,7 +271,6 @@ public class EnemyMotionUI : MonoBehaviour
 
         if (dist <= arriveEps)
         {
-            // Ÿ‚Ì“_‚Ö
             wpIndex++;
             if (wpIndex >= waypoints.Count)
             {
@@ -171,8 +281,43 @@ public class EnemyMotionUI : MonoBehaviour
             return;
         }
 
-        Vector2 step = to.normalized * speedPxPerSec * dt;
-        if (step.magnitude > dist) step = to; // ƒI[ƒo[ƒVƒ…[ƒg–h~
+        Vector2 step = to.normalized * S(speedPxPerSec) * dt;
+        if (step.magnitude > dist) step = to;
         rect.anchoredPosition = pos + step;
     }
+
+    private static IEnumerable<Vector2> BuildTriangleWaypoints(float r, float deg)
+    {
+        // â˜…æ­£ä¸‰è§’ã®å¤–æ¥å††åŠå¾„R = rã€‚å†…å¿ƒ=é‡å¿ƒ=å¤–å¿ƒãŒä¸€è‡´ï¼ˆUIå‘ã‘ã«ç°¡æ˜“ï¼‰
+        // 0Â°, 120Â°, 240Â°ã®3é ‚ç‚¹ã‚’è¿”ã™
+        float rad0 = Mathf.Deg2Rad * deg;
+        for (int i = 0; i < 3; i++)
+        {
+            float th = rad0 + i * 2f * Mathf.PI / 3f;
+            yield return new Vector2(r * Mathf.Cos(th), r * Mathf.Sin(th));
+        }
+    }
+
+
+    // ã„ã¤ã§ã‚‚ç¾åœ¨ä½ç½®ã‚’â€œåˆæœŸä½ç½®â€ã¨ã—ã¦è¨˜éŒ²ã—ãŸã„æ™‚ã«å‘¼ã¹ã‚‹å…¥å£
+    [ContextMenu("Capture Start From Current")]
+    public void CaptureStartFromCurrent()
+    {
+        var rt = GetComponent<RectTransform>();
+        startPos = rt.anchoredPosition;
+        startCaptured = true;
+    }
+
+    private void CaptureStartIfNeeded()
+    {
+        if (captureStartOnPlay && (!startCaptured || !lockStartAfterCapture))
+        {
+            var rt = GetComponent<RectTransform>();
+            startPos = rt.anchoredPosition;
+            startCaptured = true;
+        }
+    }
+
+
+
 }
