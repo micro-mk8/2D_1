@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 public class ScoringManager : MonoBehaviour
 {
@@ -29,6 +30,11 @@ public class ScoringManager : MonoBehaviour
     public int timeBonusPerSecondUnderPar = 50; //1秒=+50点
     [Tooltip("タイムボーナスの上限（フラット分を含まない）")]
     public int timeBonusMax = 3000;          //最大+3000点
+
+    [SerializeField] private int currentScore = 0;
+    public int CurrentScore => currentScore ;
+
+    public UnityEvent<int> onScoreChanged;
 
     //内部カウンタ
     public int TotalScore { get; private set; }
@@ -95,4 +101,16 @@ public class ScoringManager : MonoBehaviour
         TotalKills = 0;
         //スコアは継続ならそのまま、区切るなら TotalScore=0 にする
     }
+
+    public void ResetScore(){
+        currentScore = 0;                 // 実際のスコア変数名に合わせてください
+        onScoreChanged?.Invoke(currentScore);  // HUD更新イベントがあるなら発火
+    }
+
+    public void AddScore(int add)
+    {
+        currentScore += add;
+        onScoreChanged?.Invoke(currentScore);
+    }
+
 }

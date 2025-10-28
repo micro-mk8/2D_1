@@ -33,6 +33,11 @@ public class UIHealth : MonoBehaviour, IUIHurtTarget
         isDead = false;
         currentHP = Mathf.Clamp(currentHP < 0 ? maxHP : currentHP, 0, maxHP);
         if (myHitbox) myHitbox.enabled = true;
+
+
+        //Hud通知を発火していないからHud側の表記がリセットされていない
+        onDamaged?.Invoke(currentHP, maxHP);
+
     }
 
     // ==== 被弾コールバック（UICollisionManager から呼ばれる） ====
@@ -71,6 +76,12 @@ public class UIHealth : MonoBehaviour, IUIHurtTarget
     }
 
     // 任意：外部から回復/リセットしたい時に
-    public void ResetHP() { currentHP = maxHP; isDead = false; if (myHitbox) myHitbox.enabled = true; }
+    public void ResetHP() {
+        
+    currentHP = maxHP; isDead = false; if (myHitbox) myHitbox.enabled = true; 
+    
+    onDamaged?.Invoke(currentHP, maxHP);
+
+    }
 }
 

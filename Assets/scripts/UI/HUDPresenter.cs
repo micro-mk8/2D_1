@@ -21,7 +21,7 @@ public class HUDPresenter : MonoBehaviour
         {
             // HPが減った/回復した/初期化された時にHP表記を更新
             playerHealth.onDamaged.AddListener(OnPlayerHPChanged);
-            playerHealth.onDead.AddListener(OnPlayerDead);
+            //playerHealth.onDead.AddListener(OnPlayerDead);
         }
         RefreshAll();
     }
@@ -31,21 +31,21 @@ public class HUDPresenter : MonoBehaviour
         if (playerHealth != null)
         {
             playerHealth.onDamaged.RemoveListener(OnPlayerHPChanged);
-            playerHealth.onDead.RemoveListener(OnPlayerDead);
+            //playerHealth.onDead.RemoveListener(OnPlayerDead);
         }
     }
 
     // --- イベント受信 ---
     private void OnPlayerHPChanged(int cur, int max) => RefreshHP(cur, max);
 
-    private void OnPlayerDead()
-    {
-        // とりあえず残機だけ減らす（リスポーン処理は後で）
-        lives = Mathf.Max(0, lives - 1);
-        if (livesText) livesText.text = $"LIVES {lives}";
-    }
+    //private void OnPlayerDead()
+    //{
+    //    // とりあえず残機だけ減らす
+    //    lives = Mathf.Max(0, lives - 1);
+    //    if (livesText) livesText.text = $"LIVES {lives}";
+    //}
 
-    // --- 外部からスコア/残機を更新したい時用（後で使う） ---
+    // --- 外部からスコア/残機を更新したい時用---
     public void AddScore(int delta)
     {
         score = Mathf.Max(0, score + delta);
@@ -73,4 +73,11 @@ public class HUDPresenter : MonoBehaviour
     {
         if (hpText) hpText.text = $"HP {cur}/{max}";
     }
+
+    public void SetScore(int v){
+
+        if (scoreText) scoreText.text = v.ToString();
+    
+    }   
+
 }

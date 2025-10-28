@@ -38,7 +38,8 @@ public class PlayerRespawn : MonoBehaviour
 
 
 
-    private float? nextInvincibleSecondsOverride = null; // ← 新規：次回だけ使う秒数（nullなら既定）
+    // 無敵時間の一時上書き（使わない時は null）
+    private float? nextInvincibleSecondsOverride = null;
     private Vector2 lastDamagePosition;           // 直近の被弾時位置（＝死亡フレームも含む）
     private bool hasLastDamagePosition = false;
     private Vector2 deathPosition;          
@@ -165,11 +166,18 @@ public class PlayerRespawn : MonoBehaviour
     // ステージ開始時に呼ぶ初期化のとこ
     public void ResetLivesAndRespawnNow(int setLives, Vector2 setSpawn)
     {
+
+        StopAllCoroutines();
+        waitingRespawn = false;
+        nextInvincibleSecondsOverride = null;
+
         initialLives = Mathf.Max(0, setLives);
         lives = initialLives;
         spawnPosition = setSpawn;
         if (hud) hud.SetLives(lives);
+
         if (playerRoot) playerRoot.anchoredPosition = spawnPosition;
+
         if (playerHealth) playerHealth.ResetHP();
     }
 
