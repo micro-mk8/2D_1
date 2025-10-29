@@ -145,6 +145,36 @@ public class GameFlowController : MonoBehaviour
         onGameOverShown?.Invoke();
     }
 
+    private void HandleGameClear()
+    {
+        Debug.Log("[GF] HandleGameClear called");
+
+
+
+        // プレイを停止
+        SetMoversEnabled(false);
+        SetFireEnabled(false);
+        SetEnemySystemsEnabled(false);
+        runTimer = false;
+
+        state = GameState.GameClear;
+
+        // ★ GameClearCanvas を前面に出す
+        SetActiveSafe(clearPanel, true);
+        if (clearCanvasGroup != null)
+        {
+            StopAllCoroutines();
+            StartCoroutine(FadeCanvasGroup(clearCanvasGroup, 0f, 1f, gameClearFadeSec));
+        }
+
+        // スコアとタイムを表示
+        if (clearScoreText && scoring)
+            clearScoreText.text = $"SCORE: {scoring.CurrentScore}";
+        if (clearTimeText)
+            clearTimeText.text = $"TIME: {FormatTime(runTimeSec)}";
+    }
+
+
     private System.Collections.IEnumerator FadeCanvasGroup(CanvasGroup cg, float from, float to, float dur)
     {
         if (!cg) yield break;
