@@ -175,6 +175,11 @@ public class GameFlowController : MonoBehaviour
             clearScoreText.text = $"SCORE: {scoring.CurrentScore}";
         if (clearTimeText)
             clearTimeText.text = $"TIME: {FormatTime(runTimeSec)}";
+
+
+        Debug.Log("[GF] HandleGameClear finished, state=" + state);
+        Time.timeScale = 0f;
+
     }
 
 
