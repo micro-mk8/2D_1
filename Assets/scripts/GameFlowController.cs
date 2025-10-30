@@ -41,6 +41,7 @@ public class GameFlowController : MonoBehaviour
     [Header("Score & Timer")]
 
 
+
     private GameState state = GameState.Title;
 
     private float runTimeSec = 0f;
@@ -56,6 +57,7 @@ public class GameFlowController : MonoBehaviour
     {
         if (playerRespawn != null)
             playerRespawn.onGameOver.AddListener(HandleGameOver);
+        
     }
 
     private void OnDisable()
@@ -145,12 +147,13 @@ public class GameFlowController : MonoBehaviour
         onGameOverShown?.Invoke();
     }
 
-    private void HandleGameClear()
+
+    [ContextMenu("DEBUG/HandleGameClear()")]
+    public void HandleGameClear()
     {
         Debug.Log("[GF] HandleGameClear called");
 
-
-
+        
         // ƒvƒŒƒC‚ð’âŽ~
         SetMoversEnabled(false);
         SetFireEnabled(false);
