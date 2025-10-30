@@ -3,9 +3,9 @@ using UnityEngine.Events;
 
 public class StageClear : MonoBehaviour
 {
-    [SerializeField] private Transform enemyRoot;   // Enemy をぶら下げているルート
+    [SerializeField] private Transform enemyRoot;
     [SerializeField] private float pollInterval = 0.25f;
-    [SerializeField] private 
+    [SerializeField] private GameFlowController flow; // ← こういう感じで完成させるならOK
 
     public UnityEvent onCleared;
 
@@ -20,16 +20,13 @@ public class StageClear : MonoBehaviour
         var healths = enemyRoot.GetComponentsInChildren<UIHealth>(true);
         if (healths.Length == 0) return;
 
-        // 1体でも HP>0 がいれば未クリア
         foreach (var h in healths)
         {
             if (h && h.CurrentHP > 0) return;
         }
-        // 全員 0 → クリア
-
-        HandleGameClear();
 
         onCleared?.Invoke();
-        enabled = false; // 1回きり
+        // または、flow?.HandleGameClear(); って直接呼ぶ場合もある
+        enabled = false;
     }
 }
