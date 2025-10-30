@@ -5,6 +5,8 @@ public class StageClear : MonoBehaviour
 {
     [SerializeField] private Transform enemyRoot;   // Enemy をぶら下げているルート
     [SerializeField] private float pollInterval = 0.25f;
+    [SerializeField] private 
+
     public UnityEvent onCleared;
 
     private float nextCheck;
@@ -24,6 +26,9 @@ public class StageClear : MonoBehaviour
             if (h && h.CurrentHP > 0) return;
         }
         // 全員 0 → クリア
+
+        HandleGameClear();
+
         onCleared?.Invoke();
         enabled = false; // 1回きり
     }
