@@ -70,20 +70,33 @@ public class GameFlowController : MonoBehaviour
     {
         if (runTimer) runTimeSec += Time.unscaledDeltaTime;
 
-        // キーボードの簡易スタート/リトライ
-        if ((state == GameState.Title || state == GameState.GameOver)
-            && (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)))
+        bool pressedRestart =
+            Input.GetKeyDown(KeyCode.Space) ||
+            Input.GetKeyDown(KeyCode.Return);
+
+        bool canRestart =
+            (state == GameState.Title ||
+             state == GameState.GameOver ||
+             state == GameState.GameClear);
+
+        if (canRestart && pressedRestart)
         {
             StartOrRetry();
         }
     }
 
+
     // ▼ 外部入口：UIボタン／M5ボタンからもこれを呼べばOK
     public void StartOrRetry()
     {
-        if (state == GameState.Title || state == GameState.GameOver)
+        if (state == GameState.Title ||
+            state == GameState.GameOver ||
+            state == GameState.GameClear)
+        {
             StartGame();
+        }
     }
+
 
     public void GoTitle()
     {
@@ -99,30 +112,29 @@ public class GameFlowController : MonoBehaviour
 
     private void StartGame()
     {
-        // 画面
+        Time.timeScale = 1f; // クリア/ゲームオーバー後から戻す
+
         state = GameState.Playing;
         SetActiveSafe(titlePanel, false);
         SetActiveSafe(gameOverPanel, false);
-        
-        
-        // フィールド初期化
+
+        // クリア画面も消す必要あり
+        SetActiveSafe(clearPanel, false);
+        if (clearCanvasGroup) clearCanvasGroup.alpha = 0f;
+
+        // 弾掃除やプレイヤー初期化などは今のままでOK
         ClearBullets();
 
-        // プレイヤー初期化（HP全快＆位置復帰＆残機セット）
         if (playerRespawn != null)
             playerRespawn.ResetLivesAndRespawnNow(startLives, startSpawnPosition);
 
-        Reset();
+        Reset(); // スコアや敵HPなどを初期化
 
         runTimeSec = 0f;
-        runTimer = true;  
-
-        if (clearCanvasGroup) clearCanvasGroup.alpha = 0f;
-        SetActiveSafe(clearPanel, false);
+        runTimer = true;
 
         state = GameState.Playing;
 
-        // システム有効化
         SetMoversEnabled(true);
         SetFireEnabled(true);
         SetEnemySystemsEnabled(true);
@@ -170,7 +182,13 @@ public class GameFlowController : MonoBehaviour
             StartCoroutine(FadeCanvasGroup(clearCanvasGroup, 0f, 1f, gameClearFadeSec));
         }
 
-        // スコアとタイムを表示
+        // クリアボーナス加算（必要なら）
+        if (scoring != null)
+        {
+            scoring.ComputeAndAddClearTimeBonus();
+        }
+
+        // 表示
         if (clearScoreText && scoring)
             clearScoreText.text = $"SCORE: {scoring.CurrentScore}";
         if (clearTimeText)

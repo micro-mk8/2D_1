@@ -47,14 +47,14 @@ public class ScoringManager : MonoBehaviour
     {
         if (bulletHitbox == null || target == null) return;
 
-        // 味方(プレイヤー) → 敵 へのダメージのみを加点
+        // プレイヤー⇒敵 のダメージだけカウント
         if (bulletHitbox.faction == UIFaction.Player &&
             target.TryGetComponent<UIHitbox2D>(out var thb) &&
             thb.faction == UIFaction.Enemy)
         {
             int delta = 0;
 
-            // 与ダメージ
+            // 与ダメ
             if (damage > 0)
             {
                 DamageDealt += damage;
@@ -71,7 +71,13 @@ public class ScoringManager : MonoBehaviour
             if (delta != 0)
             {
                 TotalScore += delta;
-                if (hud) hud.AddScore(delta); // 右パネルに増分だけ反映
+
+                // ★ HUD加算（今のまま維持してOK）
+                if (hud) hud.AddScore(delta);
+
+                // ★ ゲーム全体の最終スコア用 currentScore も更新する
+                AddScore(delta);
+                // これで currentScore も一緒に伸びる
             }
         }
     }
@@ -80,7 +86,7 @@ public class ScoringManager : MonoBehaviour
     public int ComputeAndAddClearTimeBonus()
     {
         float elapsed = Time.time - levelStartTime;
-        float under = Mathf.Max(0f, timeParSeconds - elapsed); // パーより速いぶんだけ
+        float under = Mathf.Max(0f, timeParSeconds - elapsed);
         int timeBonus = Mathf.RoundToInt(under * timeBonusPerSecondUnderPar);
         timeBonus = Mathf.Min(timeBonus, timeBonusMax);
 
@@ -88,10 +94,15 @@ public class ScoringManager : MonoBehaviour
         if (totalBonus > 0)
         {
             TotalScore += totalBonus;
+
             if (hud) hud.AddScore(totalBonus);
+
+            // ★最終スコアにも反映
+            AddScore(totalBonus);
         }
         return totalBonus;
     }
+
 
     // レベル開始時に呼ぶ
     public void StartNewLevel()
