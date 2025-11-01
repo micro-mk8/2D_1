@@ -31,6 +31,9 @@ public class GameFlowController : MonoBehaviour
     [SerializeField] private ScoringManager scoring;
     [SerializeField] private HUDPresenter hudPresenter;
 
+    [SerializeField] private GameObject initialEnemiesPrefab;
+
+
     [Header("Game Clear UI")]
     [SerializeField] private GameObject clearPanel;            // ← GameClearCanvas を割り当て
     [SerializeField] private CanvasGroup clearCanvasGroup;     // ← GameClearCanvas の CanvasGroup
@@ -112,23 +115,27 @@ public class GameFlowController : MonoBehaviour
 
     private void StartGame()
     {
-        Time.timeScale = 1f; // クリア/ゲームオーバー後から戻す
+        Time.timeScale = 1f;
 
         state = GameState.Playing;
         SetActiveSafe(titlePanel, false);
         SetActiveSafe(gameOverPanel, false);
 
-        // クリア画面も消す必要あり
         SetActiveSafe(clearPanel, false);
         if (clearCanvasGroup) clearCanvasGroup.alpha = 0f;
 
-        // 弾掃除やプレイヤー初期化などは今のままでOK
+        // 弾を消す
         ClearBullets();
 
+        // 敵を初期配置に戻す ← 追加
+        ResetEnemiesFromPrefab();
+
+        // プレイヤー復帰
         if (playerRespawn != null)
             playerRespawn.ResetLivesAndRespawnNow(startLives, startSpawnPosition);
 
-        Reset(); // スコアや敵HPなどを初期化
+        // スコア / HPリセットなど
+        Reset();
 
         runTimeSec = 0f;
         runTimer = true;
@@ -141,6 +148,49 @@ public class GameFlowController : MonoBehaviour
 
         onGameStart?.Invoke();
     }
+
+
+        // EnemyRoot の中身を、初期編成プレハブから作り直す
+    private void ResetEnemiesFromPrefab()
+    {
+        if (enemyRoot == null)
+        {
+            Debug.LogWarning("enemyRoot がセットされていません");
+            return;
+        }
+
+        // 1) 既存の敵を全消し
+        for (int i = enemyRoot.childCount - 1; i >= 0; i--)
+        {
+            var child = enemyRoot.GetChild(i);
+            Destroy(child.gameObject);
+        }
+
+        // 2) 初期プレハブから新しく複製
+        if (initialEnemiesPrefab != null)
+        {
+            var clone = Instantiate(initialEnemiesPrefab, enemyRoot);
+            // 位置の基準を0にそろえる（UIなのでanchoredPositionを触るほうがいい場合もある）
+            var rt = clone.transform as RectTransform;
+            if (rt != null)
+            {
+                rt.anchoredPosition = Vector2.zero;
+                rt.localRotation = Quaternion.identity;
+                rt.localScale = Vector3.one;
+            }
+            else
+            {
+                clone.transform.localPosition = Vector3.zero;
+                clone.transform.localRotation = Quaternion.identity;
+                clone.transform.localScale = Vector3.one;
+            }
+        }
+        else
+        {
+            Debug.LogWarning("initialEnemiesPrefab が割り当てられていません");
+        }
+    }
+
 
     // GameFlowController.cs のクラス内に追加
     private void HandleGameOver()
