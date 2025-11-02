@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.Events;
 
 [RequireComponent(typeof(UIHitbox2D))]
@@ -6,16 +6,16 @@ public class UIHealth : MonoBehaviour, IUIHurtTarget
 {
     [Header("HP")]
     [Min(1)] public int maxHP = 3;
-    [SerializeField] private int currentHP = -1; // ‰Šú‰»‚Å maxHP ‚É‘µ‚¦‚é
-    public int CurrentHP => currentHP;            // QÆ—pi“Ç‚İæ‚èê—pj
+    [SerializeField] private int currentHP = -1; // åˆæœŸåŒ–ã§ maxHP ã«æƒãˆã‚‹
+    public int CurrentHP => currentHP;            // å‚ç…§ç”¨ï¼ˆèª­ã¿å–ã‚Šå°‚ç”¨ï¼‰
 
-    [Header("€–S‚Ì‹““®")]
-    [Tooltip("€–S‚µ‚½uŠÔ‚É‚±‚Ì GameObject ‚ğ”jŠü‚·‚é")]
+    [Header("æ­»äº¡æ™‚ã®æŒ™å‹•")]
+    [Tooltip("æ­»äº¡ã—ãŸç¬é–“ã«ã“ã® GameObject ã‚’ç ´æ£„ã™ã‚‹")]
     public bool destroyOnDeath = false;
-    [Tooltip("€–S‚µ‚½uŠÔ‚É Hitbox ‚ğ–³Œø‰»i‘½dƒqƒbƒg–h~j")]
+    [Tooltip("æ­»äº¡ã—ãŸç¬é–“ã« Hitbox ã‚’ç„¡åŠ¹åŒ–ï¼ˆå¤šé‡ãƒ’ãƒƒãƒˆé˜²æ­¢ï¼‰")]
     public bool disableHitboxOnDeath = true;
 
-    [Header("ƒCƒxƒ“ƒgi”CˆÓ‚ÅUI‚â‰‰o‚ÖÚ‘±j")]
+    [Header("ã‚¤ãƒ™ãƒ³ãƒˆï¼ˆä»»æ„ã§UIã‚„æ¼”å‡ºã¸æ¥ç¶šï¼‰")]
     public UnityEvent<int, int> onDamaged; // (currentHP, maxHP)
     public UnityEvent onDead;
 
@@ -29,59 +29,66 @@ public class UIHealth : MonoBehaviour, IUIHurtTarget
 
     void OnEnable()
     {
-        // ‰Šú‰»iÄŠJ‚à•œŠˆj
+        // åˆæœŸåŒ–ï¼ˆå†é–‹æ™‚ã‚‚å¾©æ´»ï¼‰
         isDead = false;
         currentHP = Mathf.Clamp(currentHP < 0 ? maxHP : currentHP, 0, maxHP);
         if (myHitbox) myHitbox.enabled = true;
 
-
-        //Hud’Ê’m‚ğ”­‰Î‚µ‚Ä‚¢‚È‚¢‚©‚çHud‘¤‚Ì•\‹L‚ªƒŠƒZƒbƒg‚³‚ê‚Ä‚¢‚È‚¢
+        //Hudé€šçŸ¥ã‚’ç™ºç«ã—ã¦ã„ãªã„ã‹ã‚‰Hudå´ã®è¡¨è¨˜ãŒãƒªã‚»ãƒƒãƒˆã•ã‚Œã¦ã„ãªã„
         onDamaged?.Invoke(currentHP, maxHP);
-
     }
 
-    // ==== ”í’eƒR[ƒ‹ƒoƒbƒNiUICollisionManager ‚©‚çŒÄ‚Î‚ê‚éj ====
+    // ==== è¢«å¼¾ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯ï¼ˆUICollisionManager ã‹ã‚‰å‘¼ã°ã‚Œã‚‹ï¼‰ ====
     public void OnHitBy(UIHitbox2D bulletHitbox)
     {
         if (isDead || bulletHitbox == null || myHitbox == null) return;
 
-        // w‰c‚ª“¯‚¶‚È‚ç–³‹iƒtƒŒƒ“ƒhƒŠ[ƒtƒ@ƒCƒA–³‚µj
+        // é™£å–¶ãŒåŒã˜ãªã‚‰ç„¡è¦–ï¼ˆãƒ•ãƒ¬ãƒ³ãƒ‰ãƒªãƒ¼ãƒ•ã‚¡ã‚¤ã‚¢ç„¡ã—ï¼‰
         if (bulletHitbox.faction == myHitbox.faction) return;
 
-        // ƒ_ƒ[ƒW’liƒfƒtƒHƒ‹ƒg1j
+        // ãƒ€ãƒ¡ãƒ¼ã‚¸å€¤ï¼ˆãƒ‡ãƒ•ã‚©ãƒ«ãƒˆ1ï¼‰
         int dmg = 1;
         var dmgComp = bulletHitbox.GetComponent<UIBulletDamage>();
         if (dmgComp) dmg = Mathf.Max(1, dmgComp.damage);
 
-        // HP ‚ğŒ¸‚ç‚·
+        // HP ã‚’æ¸›ã‚‰ã™
         currentHP = Mathf.Max(0, currentHP - dmg);
         onDamaged?.Invoke(currentHP, maxHP);
 
-        // š’Ç‰ÁFƒXƒRƒA‚Ö•ñi—^ƒ_ƒ[ƒW‚ÆŒ‚”jjš
+        // â˜…è¿½åŠ ï¼šã‚¹ã‚³ã‚¢ã¸å ±å‘Šï¼ˆä¸ãƒ€ãƒ¡ãƒ¼ã‚¸ã¨æ’ƒç ´ï¼‰â˜…
         ScoringManager.Instance?.ReportDamage(bulletHitbox, this, dmg, currentHP <= 0);
 
-
-        // €–S”»’è
+        // æ­»äº¡åˆ¤å®š
         if (currentHP <= 0)
         {
             isDead = true;
             if (disableHitboxOnDeath && myHitbox) myHitbox.enabled = false;
             onDead?.Invoke();
 
-            if (destroyOnDeath)
-            {
-                Destroy(gameObject);
-            }
+            // ğŸ”» Destroy ã®ä»£ã‚ã‚Šã«éã‚¢ã‚¯ãƒ†ã‚£ãƒ–åŒ– ğŸ”»
+            gameObject.SetActive(false);
         }
     }
 
-    // ”CˆÓFŠO•”‚©‚ç‰ñ•œ/ƒŠƒZƒbƒg‚µ‚½‚¢‚É
-    public void ResetHP() {
-        
-    currentHP = maxHP; isDead = false; if (myHitbox) myHitbox.enabled = true; 
-    
-    onDamaged?.Invoke(currentHP, maxHP);
+    // ä»»æ„ï¼šå¤–éƒ¨ã‹ã‚‰å›å¾©/ãƒªã‚»ãƒƒãƒˆã—ãŸã„æ™‚ã«
+    public void ResetHP()
+    {
+        currentHP = maxHP;
+        isDead = false;
+        if (myHitbox) myHitbox.enabled = true;
 
+        onDamaged?.Invoke(currentHP, maxHP);
+    }
+
+    // ğŸŸ¢ æ–°è¦è¿½åŠ ï¼šå¾©æ´»ç”¨ï¼ˆSetActiveã‚’æˆ»ã™ï¼†HPãƒªã‚»ãƒƒãƒˆï¼‰
+    public void Revive()
+    {
+        gameObject.SetActive(true);   // è¡¨ç¤ºã‚’æˆ»ã™
+        currentHP = maxHP;            // HPã‚’æœ€å¤§ã«æˆ»ã™
+        isDead = false;
+        if (myHitbox) myHitbox.enabled = true;
+
+        // UIæ›´æ–°ã‚¤ãƒ™ãƒ³ãƒˆã‚’å†ç™ºç«ï¼ˆHUDãªã©ã¸åæ˜ ï¼‰
+        onDamaged?.Invoke(currentHP, maxHP);
     }
 }
-

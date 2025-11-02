@@ -93,28 +93,35 @@ public class PlayerRespawn : MonoBehaviour
     {
         if (waitingRespawn) return;
 
+        // まず残機を1つ減らす
+        lives--;
+        if (lives < 0)
+            lives = 0;
+
+        // HUD更新
+        if (hud) hud.SetLives(lives);
+
+        // まだ残機がある場合の処理
         if (lives > 0)
         {
-            lives--;
-            if (hud) hud.SetLives(lives);
-
             if (noRespawnMode)
             {
-                // ★ 復活しないフローへ
+                // 復活しないタイプ（その場でHP回復＋無敵点滅）のフロー
                 StartCoroutine(CoNoRespawn());
             }
             else
             {
-                // ★ 既存の復活フロー（残す）
-                //StartCoroutine(CoRespawn());
+                // もし古い復活フローを将来使うならここでCoRespawn()を呼ぶ
+                // StartCoroutine(CoRespawn());
             }
+
+            return;
         }
-        else
-        {
-            // 残機ゼロ → ゲームオーバー（必要ならここに処理）
-            onGameOver?.Invoke();
-        }
+
+        // 残機が0になった場合はゲームオーバーを通知
+        onGameOver?.Invoke();
     }
+
 
 
     private IEnumerator CoNoRespawn()

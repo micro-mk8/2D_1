@@ -622,12 +622,12 @@ GameObject:
   - component: {fileID: 173458226}
   - component: {fileID: 173458227}
   - component: {fileID: 173458228}
-  - component: {fileID: 173458229}
   - component: {fileID: 173458230}
   - component: {fileID: 173458232}
   - component: {fileID: 173458234}
   - component: {fileID: 173458233}
   - component: {fileID: 173458235}
+  - component: {fileID: 173458236}
   m_Layer: 5
   m_Name: PlayerRoot
   m_TagString: Untagged
@@ -778,21 +778,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &173458229
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 173458220}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 81661820c69ff8148b6627979f2643e5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  controller: {fileID: 173458226}
-  gameFlowController: {fileID: 1250881223}
-  triggerStartRetryOnFire: 1
 --- !u!114 &173458230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -882,6 +867,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   invincibility: {fileID: 173458232}
   hurtbox: {fileID: 173458227}
+--- !u!114 &173458236
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 173458220}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: afaf2e6ba2d050540a4edb3ab1c8d19f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  controller: {fileID: 173458226}
+  udp: {fileID: 1893121739}
+  triggerStartRetryOnFire: 1
+  onFirePressedForStartRetry:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &285757425
 GameObject:
   m_ObjectHideFlags: 0
@@ -2107,11 +2110,14 @@ MonoBehaviour:
   enemyRoot: {fileID: 0}
   scoring: {fileID: 0}
   hudPresenter: {fileID: 0}
+  initialEnemiesPrefab: {fileID: 0}
   clearPanel: {fileID: 0}
   clearCanvasGroup: {fileID: 0}
   clearScoreText: {fileID: 0}
   clearTimeText: {fileID: 0}
   gameClearFadeSec: 0.25
+  stageClear: {fileID: 0}
+  m5Bridge: {fileID: 0}
 --- !u!1 &1004201554
 GameObject:
   m_ObjectHideFlags: 0
@@ -2670,7 +2676,7 @@ MonoBehaviour:
   fireComponents:
   - {fileID: 173458226}
   - {fileID: 1522966232}
-  - {fileID: 173458229}
+  - {fileID: 0}
   enemySystems:
   - {fileID: 1522966227}
   - {fileID: 1522966232}
@@ -2687,11 +2693,14 @@ MonoBehaviour:
   enemyRoot: {fileID: 1522966226}
   scoring: {fileID: 1250881219}
   hudPresenter: {fileID: 1676933143}
+  initialEnemiesPrefab: {fileID: 0}
   clearPanel: {fileID: 35832853}
   clearCanvasGroup: {fileID: 35832854}
   clearScoreText: {fileID: 1815479950}
   clearTimeText: {fileID: 701295603}
   gameClearFadeSec: 0.25
+  stageClear: {fileID: 1250881224}
+  m5Bridge: {fileID: 173458236}
 --- !u!114 &1250881224
 MonoBehaviour:
   m_ObjectHideFlags: 0

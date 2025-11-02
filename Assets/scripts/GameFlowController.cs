@@ -41,7 +41,9 @@ public class GameFlowController : MonoBehaviour
     [SerializeField] private TMP_Text clearTimeText;               // ← TIME テキスト
     [SerializeField, Min(0f)] private float gameClearFadeSec = 0.25f;
 
-    [Header("Score & Timer")]
+    [SerializeField] private StageClear stageClear;  // インスペクタで割り当てる    
+    [SerializeField] private M5FireBridge m5Bridge;
+
 
 
 
@@ -60,14 +62,26 @@ public class GameFlowController : MonoBehaviour
     {
         if (playerRespawn != null)
             playerRespawn.onGameOver.AddListener(HandleGameOver);
-        
+
+        if (m5Bridge != null)
+        {
+            // M5からの"FIRE"通知イベントを購読する
+            m5Bridge.GetStartRetryEvent().AddListener(OnM5ButtonPressed);
+        }
     }
 
     private void OnDisable()
     {
         if (playerRespawn != null)
             playerRespawn.onGameOver.RemoveListener(HandleGameOver);
+
+        if (m5Bridge != null)
+        {
+            // 購読解除
+            m5Bridge.GetStartRetryEvent().RemoveListener(OnM5ButtonPressed);
+        }
     }
+
 
     private void Update()
     {
@@ -124,24 +138,37 @@ public class GameFlowController : MonoBehaviour
         SetActiveSafe(clearPanel, false);
         if (clearCanvasGroup) clearCanvasGroup.alpha = 0f;
 
-        // 弾を消す
+        // まず弾を全部消す
         ClearBullets();
 
-        // 敵を初期配置に戻す ← 追加
-        ResetEnemiesFromPrefab();
+        // ★敵を復活させる（非アクティブ→アクティブ、HP満タン、初期位置へ）
+        ReviveAllEnemies();
 
-        // プレイヤー復帰
-        if (playerRespawn != null)
+        // プレイヤー復帰（ライフと位置リセット）
+        if (playerRespawn != null){
             playerRespawn.ResetLivesAndRespawnNow(startLives, startSpawnPosition);
+                var playerHealth = playerRespawn.GetComponentInChildren<UIHealth>(true);
+            if (playerHealth != null)
+            {
+                playerHealth.gameObject.SetActive(true);
+                playerHealth.ResetHP();
+            }
+        }
 
-        // スコア / HPリセットなど
-        Reset();
+        // スコアなどのリセット
+        ResetScoreAndHudOnly();
 
+        // タイマー初期化
         runTimeSec = 0f;
         runTimer = true;
 
+            // ←これを追加
+        if (stageClear != null)
+            stageClear.enabled = true;
+
         state = GameState.Playing;
 
+        // 入力・射撃・敵システム再有効化
         SetMoversEnabled(true);
         SetFireEnabled(true);
         SetEnemySystemsEnabled(true);
@@ -151,45 +178,73 @@ public class GameFlowController : MonoBehaviour
 
 
         // EnemyRoot の中身を、初期編成プレハブから作り直す
-    private void ResetEnemiesFromPrefab()
+    //private void ResetEnemiesFromPrefab()
+    //{
+    //    if (enemyRoot == null)
+    //    {
+    //        Debug.LogWarning("enemyRoot がセットされていません");
+    //        return;
+    //    }
+    //
+    //    // 1) 既存の敵を全消し
+    //    for (int i = enemyRoot.childCount - 1; i >= 0; i--)
+    //    {
+    //        var child = enemyRoot.GetChild(i);
+    //        Destroy(child.gameObject);
+    //    }
+    //
+    //    // 2) 初期プレハブから新しく複製
+    //    if (initialEnemiesPrefab != null)
+    //    {
+    //        var clone = Instantiate(initialEnemiesPrefab, enemyRoot);
+    //        // 位置の基準を0にそろえる（UIなのでanchoredPositionを触るほうがいい場合もある）
+    //        var rt = clone.transform as RectTransform;
+    //        if (rt != null)
+    //        {
+    //            rt.anchoredPosition = Vector2.zero;
+    //            rt.localRotation = Quaternion.identity;
+    //            rt.localScale = Vector3.one;
+    //        }
+    //        else
+    //        {
+    //            clone.transform.localPosition = Vector3.zero;
+    //            clone.transform.localRotation = Quaternion.identity;
+    //            clone.transform.localScale = Vector3.one;
+    //        }
+    //    }
+    //    else
+    //    {
+    //        Debug.LogWarning("initialEnemiesPrefab が割り当てられていません");
+    //    }
+    //}
+
+        // 敵を再利用して復活させる
+    private void ReviveAllEnemies()
     {
-        if (enemyRoot == null)
-        {
-            Debug.LogWarning("enemyRoot がセットされていません");
-            return;
-        }
+        if (!enemyRoot) return;
 
-        // 1) 既存の敵を全消し
-        for (int i = enemyRoot.childCount - 1; i >= 0; i--)
-        {
-            var child = enemyRoot.GetChild(i);
-            Destroy(child.gameObject);
-        }
+        // enemyRoot 配下の全敵の UIHealth を取得（非アクティブも含めて拾いたいので true）
+        var allHealth = enemyRoot.GetComponentsInChildren<UIHealth>(true);
 
-        // 2) 初期プレハブから新しく複製
-        if (initialEnemiesPrefab != null)
+        foreach (var h in allHealth)
         {
-            var clone = Instantiate(initialEnemiesPrefab, enemyRoot);
-            // 位置の基準を0にそろえる（UIなのでanchoredPositionを触るほうがいい場合もある）
-            var rt = clone.transform as RectTransform;
-            if (rt != null)
+            if (h == null) continue;
+
+            // 1) ゲームオブジェクトを再アクティブ化し、HP満タンに戻す
+            h.Revive();  // ← UIHealthに追加したやつ。SetActive(true), HP=maxHP, isDead=false, onDamaged発火
+
+            // 2) 動きをリセット（もし動きスクリプトを持っているなら）
+            var motion = h.GetComponent<EnemyMotionUI>();
+            if (motion != null)
             {
-                rt.anchoredPosition = Vector2.zero;
-                rt.localRotation = Quaternion.identity;
-                rt.localScale = Vector3.one;
+                // あなたのプロジェクトには EnemyMotionUI.ResetToStartForRetry() があるので、それを呼ぶ
+                motion.ResetToStartForRetry();
             }
-            else
-            {
-                clone.transform.localPosition = Vector3.zero;
-                clone.transform.localRotation = Quaternion.identity;
-                clone.transform.localScale = Vector3.one;
-            }
-        }
-        else
-        {
-            Debug.LogWarning("initialEnemiesPrefab が割り当てられていません");
         }
     }
+
+
+
 
 
     // GameFlowController.cs のクラス内に追加
@@ -266,24 +321,35 @@ public class GameFlowController : MonoBehaviour
     }
 
 
-    private void Reset(){
-
+    // スコアだけ・HUDだけを初期化する
+    private void ResetScoreAndHudOnly()
+    {
         if (scoring) scoring.ResetScore();
         if (hudPresenter) hudPresenter.SetScore(0);
-
-        if (enemyRoot){
-
-            var healths = enemyRoot.GetComponentsInChildren<UIHealth>(true);
-            foreach ( var h in healths )
-                h.ResetHP();
-
-            var motions = enemyRoot.GetComponentsInChildren<EnemyMotionUI>(true);
-            foreach ( var m in motions )
-                m.ResetToStartForRetry();
-            
-        }
-
     }
+
+    private void OnM5ButtonPressed()
+    {
+        // 状態に応じてSpaceキーと同じ動作を行う
+        switch (state)
+        {
+            case GameState.Title:
+                StartGame();
+                break;
+
+            case GameState.GameOver:
+            case GameState.GameClear:
+                StartOrRetry();
+                break;
+
+            default:
+                // プレイ中は弾発射なので何もしない
+                break;
+        }
+    }
+
+
+
 
     // ===== ユーティリティ =====
 
