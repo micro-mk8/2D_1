@@ -34,8 +34,8 @@ public class PlayerMoverFromM5 : MonoBehaviour
 
     void Update()
     {
-        // ★ここ：キャリブレーションはPCキーボードのCだけでやる
-        if (Input.GetKeyDown(calibrateKey)) 
+        // キャリブレーションは PC キーボードの C のみ
+        if (Input.GetKeyDown(calibrateKey))
         {
             CaptureBias();
         }
@@ -43,7 +43,10 @@ public class PlayerMoverFromM5 : MonoBehaviour
         var r = UdpReceiver.Instance;
         if (r == null) return;
 
-        // 加速度の読み取り～位置更新は今まで通り
+        // M5ボタン(FIRE)が押されたときのデータを無視する
+        if (!string.IsNullOrEmpty(r.latestRaw) && r.latestRaw.StartsWith("FIRE"))
+            return; // ←★これを追加。FIRE信号時は位置処理もキャリブレーションも止める
+
         Vector2 a = new Vector2(r.latestAccel.x, r.latestAccel.y);
         a *= inputScale;
 
@@ -58,6 +61,7 @@ public class PlayerMoverFromM5 : MonoBehaviour
 
         rect.anchoredPosition += a * pixelsPerG * Time.deltaTime;
     }
+
 
 
     [ContextMenu("Calibrate Now (use current M5 values as zero)")]
