@@ -9,120 +9,131 @@ public class GameFlowController : MonoBehaviour
 
     [Header("参照")]
     [SerializeField] private PlayerRespawn playerRespawn;
-    [SerializeField] private RectTransform bulletLayer;    // 弾の親（任意：開始時に掃除）
-    [SerializeField] private MonoBehaviour[] moverComponents; // 移動系（PlayerMoverUI / FromM5）
-    [SerializeField] private MonoBehaviour[] fireComponents;  // 射撃系（AllyBulletController / PlayerFireController / M5FireBridge等）
-    [SerializeField] private MonoBehaviour[] enemySystems;    // 敵の弾幕/出現制御（EnemyDanmakuController等）
+    [SerializeField] private RectTransform bulletLayer;          // 弾をぶら下げている親
+    [SerializeField] private MonoBehaviour[] moverComponents;    // PlayerMoverFromM5 / PlayerMoverUI など
+    [SerializeField] private MonoBehaviour[] fireComponents;     // AllyBulletController / M5FireBridge など
+    [SerializeField] private MonoBehaviour[] enemySystems;       // 敵AIや弾幕系など
 
     [Header("UIパネル")]
-    [SerializeField] private GameObject titlePanel;    // タイトル/スタートパネル
-    [SerializeField] private GameObject gameOverPanel; // ゲームオーバーパネル
+    [SerializeField] private GameObject titlePanel;              // Title/PressStart系
+    [SerializeField] private GameObject gameOverPanel;           // GameOverパネル
 
     [Header("開始設定")]
-    [SerializeField, Min(0)] private int startLives = 3;            // 開始時の残機
-    [SerializeField] private Vector2 startSpawnPosition = Vector2.zero; // 開始位置
+    [SerializeField, Min(0)] private int startLives = 3;
+    [SerializeField] private Vector2 startSpawnPosition = Vector2.zero;
 
     [Header("イベント（任意）")]
     public UnityEvent onGameStart;
     public UnityEvent onGameOverShown;
 
     [Header("hudリセット")]
-    [SerializeField] private Transform enemyRoot;
+    [SerializeField] private Transform enemyRoot;                // 既存の敵たちがぶら下がってる親
     [SerializeField] private ScoringManager scoring;
     [SerializeField] private HUDPresenter hudPresenter;
 
+    // 初期敵構成のPrefab（敵を完全に作り直したいとき用。今は未使用でもOK）
     [SerializeField] private GameObject initialEnemiesPrefab;
 
-
     [Header("Game Clear UI")]
-    [SerializeField] private GameObject clearPanel;            // ← GameClearCanvas を割り当て
-    [SerializeField] private CanvasGroup clearCanvasGroup;     // ← GameClearCanvas の CanvasGroup
-    [SerializeField] private TMP_Text clearScoreText;              // ← SCORE テキスト
-    [SerializeField] private TMP_Text clearTimeText;               // ← TIME テキスト
+    [SerializeField] private GameObject clearPanel;              // GameClearCanvas
+    [SerializeField] private CanvasGroup clearCanvasGroup;       // そのCanvasGroup
+    [SerializeField] private TMP_Text clearScoreText;
+    [SerializeField] private TMP_Text clearTimeText;
     [SerializeField, Min(0f)] private float gameClearFadeSec = 0.25f;
 
-    [SerializeField] private StageClear stageClear;  // インスペクタで割り当てる    
-    [SerializeField] private M5FireBridge m5Bridge;
-
-
-
+    [SerializeField] private StageClear stageClear;              // 全滅監視用
+    [SerializeField] private M5FireBridge m5Bridge;              // M5入力ブリッジ
 
     private GameState state = GameState.Title;
 
+    // クリアタイム計測
     private float runTimeSec = 0f;
     private bool runTimer = false;
 
+    // ===== Unity標準イベント =====
 
     private void Awake()
     {
-        GoTitle(); // 起動時はタイトル状態
+        // 起動時はタイトル状態にしておく
+        GoTitle();
     }
 
-    // OnEnable は playerRespawn だけでOK
     private void OnEnable()
     {
+        // プレイヤー死亡→GameOverの通知
         if (playerRespawn != null)
             playerRespawn.onGameOver.AddListener(HandleGameOver);
     }
 
-    // OnDisable も同様
     private void OnDisable()
     {
         if (playerRespawn != null)
             playerRespawn.onGameOver.RemoveListener(HandleGameOver);
     }
 
-        private void Update()
-    {
-        // --- SpaceキーでもM5でも常に入力を受け取る ---
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            OnM5ButtonPressed(); // SpaceもM5と同じ処理を共有
-        }
-    }
-
-        private void Update()
-    {
-        // Spaceキーでスタート・リトライ
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            OnM5ButtonPressed();
-        }
-
-        // --- M5ボタンでも同じ挙動をするようにする ---
-        if (m5Bridge != null)
-        {
-            // UDPの最新rawが "FIRE" のとき（＝M5ボタン押下）
-            if (!string.IsNullOrEmpty(m5Bridge.udp.latestRaw) &&
-                m5Bridge.udp.latestRaw.StartsWith("FIRE"))
-            {
-                OnM5ButtonPressed();
-            }
-        }
-    }
-
-
-
-
-
     private void Start()
     {
-        // --- onGameOver イベント購読 ---
-        if (playerRespawn != null)
-            playerRespawn.onGameOver.AddListener(HandleGameOver);
-
-        // --- M5FireBridge購読：Startで登録しておけばDisableされても残る ---
+        // m5Bridgeの "スタート/リトライ押したよ" イベントを購読しておく
+        // （m5Bridgeが有効な限り、ここから OnM5ButtonPressed が呼ばれる）
         if (m5Bridge != null)
         {
             var ev = m5Bridge.GetStartRetryEvent();
-            ev.RemoveListener(OnM5ButtonPressed);  // 重複防止
+            ev.RemoveListener(OnM5ButtonPressed); // 二重登録防止
             ev.AddListener(OnM5ButtonPressed);
         }
     }
 
+    private void Update()
+    {
+        // --- 1) Spaceキーで Start / Retry ---
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            OnM5ButtonPressed(); // Spaceも最終的に同じ入口を通す
+        }
 
+        // --- 2) M5の「FIRE」生信号でも Start / Retry ---
+        // ここは毎フレーム直接チェック（m5BridgeのMonoBehaviourが無効でもudp.latestRawは読める想定）
+        if (m5Bridge != null && m5Bridge.udp != null)
+        {
+            string raw = m5Bridge.udp.latestRaw;
+            if (!string.IsNullOrEmpty(raw) && raw.StartsWith("FIRE"))
+            {
+                OnM5ButtonPressed();
+            }
+        }
 
-    // ▼ 外部入口：UIボタン／M5ボタンからもこれを呼べばOK
+        // --- 3) タイマー進行（プレイ中のみ） ---
+        if (runTimer)
+        {
+            runTimeSec += Time.deltaTime;
+        }
+    }
+
+    // ===== 外部・共通入口 =====
+    // Spaceキー / M5ボタン / UIボタン から全てここを通す
+    private void OnM5ButtonPressed()
+    {
+        switch (state)
+        {
+            case GameState.Title:
+                // タイトル中はゲーム開始
+                StartGame();
+                break;
+
+            case GameState.GameOver:
+            case GameState.GameClear:
+                // GameOver/GameClear中はリトライ
+                StartOrRetry();
+                break;
+
+            case GameState.Playing:
+                // プレイ中は弾発射ボタンなので、ここでは何もしない
+                // （実際の発射はM5FireBridge / AllyBulletController側に任せる）
+                break;
+        }
+    }
+
+    // UIからも呼びたい場合があるのでpublicのまま残す
     public void StartOrRetry()
     {
         if (state == GameState.Title ||
@@ -133,40 +144,59 @@ public class GameFlowController : MonoBehaviour
         }
     }
 
+    // ===== 状態遷移 =====
 
+    // タイトル状態に戻す
     public void GoTitle()
     {
         state = GameState.Title;
+
         SetActiveSafe(titlePanel, true);
-        SetActiveSafe(gameOverPanel, false);
-
-        SetMoversEnabled(false);
-        SetFireEnabled(false);
-        SetEnemySystemsEnabled(false);
-        // 必要ならここでスコア/タイマー初期化のイベントを投げる
-    }
-
-    private void StartGame()
-    {
-        Time.timeScale = 1f;
-
-        state = GameState.Playing;
-        SetActiveSafe(titlePanel, false);
         SetActiveSafe(gameOverPanel, false);
 
         SetActiveSafe(clearPanel, false);
         if (clearCanvasGroup) clearCanvasGroup.alpha = 0f;
 
-        // まず弾を全部消す
+        // 入力・射撃・敵システムは止めておく
+        SetMoversEnabled(false);
+        SetFireEnabled(false);
+        SetEnemySystemsEnabled(false);
+
+        // HUD・スコアの初期化（見た目上のリセットだけでOK）
+        ResetScoreAndHudOnly();
+
+        runTimer = false;
+        runTimeSec = 0f;
+        Time.timeScale = 1f;
+    }
+
+    // ゲーム開始 / リトライ時に呼ばれる本体
+    private void StartGame()
+    {
+        // 時間を動かす
+        Time.timeScale = 1f;
+
+        // 状態切り替え
+        state = GameState.Playing;
+
+        // 各パネルOFF
+        SetActiveSafe(titlePanel, false);
+        SetActiveSafe(gameOverPanel, false);
+        SetActiveSafe(clearPanel, false);
+        if (clearCanvasGroup) clearCanvasGroup.alpha = 0f;
+
+        // 全弾消し
         ClearBullets();
 
-        // ★敵を復活させる（非アクティブ→アクティブ、HP満タン、初期位置へ）
+        // 敵を復活
         ReviveAllEnemies();
 
-        // プレイヤー復帰（ライフと位置リセット）
-        if (playerRespawn != null){
+        // プレイヤー復活＆HP全快＆Livesリセット
+        if (playerRespawn != null)
+        {
             playerRespawn.ResetLivesAndRespawnNow(startLives, startSpawnPosition);
-                var playerHealth = playerRespawn.GetComponentInChildren<UIHealth>(true);
+
+            var playerHealth = playerRespawn.GetComponentInChildren<UIHealth>(true);
             if (playerHealth != null)
             {
                 playerHealth.gameObject.SetActive(true);
@@ -174,131 +204,65 @@ public class GameFlowController : MonoBehaviour
             }
         }
 
-        // スコアなどのリセット
+        // スコアやHUDの見た目をリセット
         ResetScoreAndHudOnly();
 
-        // タイマー初期化
+        // タイマー開始
         runTimeSec = 0f;
         runTimer = true;
 
-            // ←これを追加
+        // ステージクリア監視を有効化（敵全滅→HandleGameClear呼ばせるため）
         if (stageClear != null)
             stageClear.enabled = true;
 
-        state = GameState.Playing;
-
-        // 入力・射撃・敵システム再有効化
+        // 入力・射撃・敵システムを有効化
         SetMoversEnabled(true);
         SetFireEnabled(true);
         SetEnemySystemsEnabled(true);
 
+        // コールバック
         onGameStart?.Invoke();
     }
 
-
-        // EnemyRoot の中身を、初期編成プレハブから作り直す
-    //private void ResetEnemiesFromPrefab()
-    //{
-    //    if (enemyRoot == null)
-    //    {
-    //        Debug.LogWarning("enemyRoot がセットされていません");
-    //        return;
-    //    }
-    //
-    //    // 1) 既存の敵を全消し
-    //    for (int i = enemyRoot.childCount - 1; i >= 0; i--)
-    //    {
-    //        var child = enemyRoot.GetChild(i);
-    //        Destroy(child.gameObject);
-    //    }
-    //
-    //    // 2) 初期プレハブから新しく複製
-    //    if (initialEnemiesPrefab != null)
-    //    {
-    //        var clone = Instantiate(initialEnemiesPrefab, enemyRoot);
-    //        // 位置の基準を0にそろえる（UIなのでanchoredPositionを触るほうがいい場合もある）
-    //        var rt = clone.transform as RectTransform;
-    //        if (rt != null)
-    //        {
-    //            rt.anchoredPosition = Vector2.zero;
-    //            rt.localRotation = Quaternion.identity;
-    //            rt.localScale = Vector3.one;
-    //        }
-    //        else
-    //        {
-    //            clone.transform.localPosition = Vector3.zero;
-    //            clone.transform.localRotation = Quaternion.identity;
-    //            clone.transform.localScale = Vector3.one;
-    //        }
-    //    }
-    //    else
-    //    {
-    //        Debug.LogWarning("initialEnemiesPrefab が割り当てられていません");
-    //    }
-    //}
-
-        // 敵を再利用して復活させる
-    private void ReviveAllEnemies()
-    {
-        if (!enemyRoot) return;
-
-        // enemyRoot 配下の全敵の UIHealth を取得（非アクティブも含めて拾いたいので true）
-        var allHealth = enemyRoot.GetComponentsInChildren<UIHealth>(true);
-
-        foreach (var h in allHealth)
-        {
-            if (h == null) continue;
-
-            // 1) ゲームオブジェクトを再アクティブ化し、HP満タンに戻す
-            h.Revive();  // ← UIHealthに追加したやつ。SetActive(true), HP=maxHP, isDead=false, onDamaged発火
-
-            // 2) 動きをリセット（もし動きスクリプトを持っているなら）
-            var motion = h.GetComponent<EnemyMotionUI>();
-            if (motion != null)
-            {
-                // あなたのプロジェクトには EnemyMotionUI.ResetToStartForRetry() があるので、それを呼ぶ
-                motion.ResetToStartForRetry();
-            }
-        }
-    }
-
-
-
-
-
-    // GameFlowController.cs のクラス内に追加
+    // GameOver時に PlayerRespawn から呼ばれる
     private void HandleGameOver()
     {
-        // 進行停止
+        // プレイ停止
         SetMoversEnabled(false);
         SetFireEnabled(false);
         SetEnemySystemsEnabled(false);
+
         runTimer = false;
 
-        // 画面表示を切替
         state = GameState.GameOver;
+
+        // GameOverパネルON, タイトルOFF, クリア画面OFF
         SetActiveSafe(gameOverPanel, true);
         SetActiveSafe(titlePanel, false);
+        SetActiveSafe(clearPanel, false);
 
+        // コールバック
         onGameOverShown?.Invoke();
-    }
 
+        // 時間は止めない（止めるとUpdate自体も動くけどTime.timeScaleだけが0になるので
+        // M5BridgeやこのUpdate内の処理はMonoBehaviour.Updateとしては動く。
+        // もし完全停止したいなら Time.timeScale = 0f; にしてOK。
+    }
 
     [ContextMenu("DEBUG/HandleGameClear()")]
     public void HandleGameClear()
     {
         Debug.Log("[GF] HandleGameClear called");
 
-        
-        // プレイを停止
+        // 停止
         SetMoversEnabled(false);
         SetFireEnabled(false);
         SetEnemySystemsEnabled(false);
-        runTimer = false;
 
+        runTimer = false;
         state = GameState.GameClear;
 
-        // ★ GameClearCanvas を前面に出す
+        // クリア画面を表示
         SetActiveSafe(clearPanel, true);
         if (clearCanvasGroup != null)
         {
@@ -306,24 +270,23 @@ public class GameFlowController : MonoBehaviour
             StartCoroutine(FadeCanvasGroup(clearCanvasGroup, 0f, 1f, gameClearFadeSec));
         }
 
-        // クリアボーナス加算（必要なら）
+        // スコア最終確定（クリアボーナスなど）
         if (scoring != null)
         {
             scoring.ComputeAndAddClearTimeBonus();
         }
 
-        // 表示
+        // UIにタイムとスコア反映
         if (clearScoreText && scoring)
             clearScoreText.text = $"SCORE: {scoring.CurrentScore}";
         if (clearTimeText)
             clearTimeText.text = $"TIME: {FormatTime(runTimeSec)}";
 
-
         Debug.Log("[GF] HandleGameClear finished, state=" + state);
+
+        // クリア画面中はゲーム内の時間を止める
         Time.timeScale = 0f;
-
     }
-
 
     private System.Collections.IEnumerator FadeCanvasGroup(CanvasGroup cg, float from, float to, float dur)
     {
@@ -339,63 +302,95 @@ public class GameFlowController : MonoBehaviour
         cg.alpha = to;
     }
 
+    // ===== 復活・リセット系 =====
 
-    // スコアだけ・HUDだけを初期化する
+    // スコアUIとHUDだけを初期状態に戻す
     private void ResetScoreAndHudOnly()
     {
         if (scoring) scoring.ResetScore();
         if (hudPresenter) hudPresenter.SetScore(0);
     }
 
-    private void OnM5ButtonPressed()
+    // 敵を「再使用」する：非アクティブにしていた敵をもう一回生き返らせる
+    private void ReviveAllEnemies()
     {
-        // 状態に応じてSpaceキーと同じ動作を行う
-        switch (state)
+        if (!enemyRoot) return;
+
+        // 非アクティブも含めて全部とりたいので true を付ける
+        var allHealth = enemyRoot.GetComponentsInChildren<UIHealth>(true);
+
+        foreach (var h in allHealth)
         {
-            case GameState.Title:
-                StartGame();
-                break;
+            if (!h) continue;
 
-            case GameState.GameOver:
-            case GameState.GameClear:
-                StartOrRetry();
-                break;
+            // UIHealth に実装した Revive():
+            //   - gameObject.SetActive(true)
+            //   - currentHP = maxHP
+            //   - isDead = false
+            //   - onDamaged.Invoke() 等の見た目リフレッシュ
+            h.Revive();
 
-            default:
-                // プレイ中は弾発射なので何もしない
-                break;
+            // もし敵の移動スクリプト(EnemyMotionUIなど)があるなら初期位置に戻す
+            var motion = h.GetComponent<EnemyMotionUI>();
+            if (motion != null)
+            {
+                motion.ResetToStartForRetry();
+            }
         }
     }
 
+    // すべての弾を片付ける
+    private void ClearBullets()
+    {
+        if (!bulletLayer) return;
 
+        for (int i = bulletLayer.childCount - 1; i >= 0; i--)
+        {
+            var child = bulletLayer.GetChild(i).gameObject;
 
+            // オブジェクトプール運用なら返却、それ以外ならDestroy
+            var poolable = child.GetComponent<Poolable>();
+            if (poolable != null)
+            {
+                poolable.TryRelease();
+            }
+            else
+            {
+                Destroy(child);
+            }
+        }
+    }
 
-    // ===== ユーティリティ =====
+    // ===== 小物ヘルパ =====
 
     private void SetActiveSafe(GameObject go, bool v)
     {
-        if (go && go.activeSelf != v) go.SetActive(v);
+        if (!go) return;
+        if (go.activeSelf != v) go.SetActive(v);
     }
 
-    private void SetMoversEnabled(bool enabled)
+    private void SetMoversEnabled(bool en)
     {
-        ToggleArray(moverComponents, enabled);
+        ToggleArray(moverComponents, en);
     }
 
-    private void SetFireEnabled(bool enabled)
+    private void SetFireEnabled(bool en)
     {
-        ToggleArray(fireComponents, enabled);
+        ToggleArray(fireComponents, en);
     }
 
-    private void SetEnemySystemsEnabled(bool enabled)
+    private void SetEnemySystemsEnabled(bool en)
     {
-        ToggleArray(enemySystems, enabled);
+        ToggleArray(enemySystems, en);
     }
 
-    private void ToggleArray(MonoBehaviour[] arr, bool enabled)
+    private void ToggleArray(MonoBehaviour[] arr, bool en)
     {
         if (arr == null) return;
-        foreach (var m in arr) if (m) m.enabled = enabled;
+        foreach (var m in arr)
+        {
+            if (m) m.enabled = en;
+        }
     }
 
     private string FormatTime(float sec)
@@ -404,20 +399,5 @@ public class GameFlowController : MonoBehaviour
         int m = (int)(sec / 60f);
         float s = sec - m * 60;
         return $"{m:00}:{s:00.000}";
-    }
-
-
-
-    private void ClearBullets()
-    {
-        if (!bulletLayer) return;
-        for (int i = bulletLayer.childCount - 1; i >= 0; i--)
-        {
-            var child = bulletLayer.GetChild(i).gameObject;
-            // プール運用なら ReturnToPool を呼ぶ。無ければ Destroy
-            var poolable = child.GetComponent<Poolable>();
-            if (poolable != null) poolable.TryRelease();
-            else Destroy(child);
-        }
     }
 }

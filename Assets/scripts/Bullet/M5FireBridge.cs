@@ -7,7 +7,7 @@ public class M5FireBridge : MonoBehaviour
     [SerializeField] private AllyBulletController controller;
 
     [Header("UDP受信 (latestRaw を読む)")]
-    [SerializeField] private UdpReceiver udp;
+    [SerializeField] public UdpReceiver udp;
 
     [Header("Start/Retry用イベント (GameFlowControllerが購読する)")]
     [SerializeField] private UnityEvent onFirePressedForStartRetry;
