@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 654212457329966131}
   - component: {fileID: 2127368146210060006}
   - component: {fileID: 3373632515356330134}
+  - component: {fileID: 6344384522683312359}
   m_Layer: 5
   m_Name: BulletStraightPrefab
   m_TagString: Untagged
@@ -105,7 +106,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c14b0affb5ef1c248bbc211aab0dd435, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lifeTime: 4
+  lifeTime: 10
   container: {fileID: 0}
 --- !u!114 &2127368146210060006
 MonoBehaviour:
@@ -134,3 +135,16 @@ MonoBehaviour:
   role: 0
   faction: 0
   padding: {x: 1, y: 1}
+--- !u!114 &6344384522683312359
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5495842570497735605}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31687e57eaf118e4ab5b708a18b4268d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  damage: 1

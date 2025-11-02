@@ -124,4 +124,27 @@ public class ScoringManager : MonoBehaviour
         onScoreChanged?.Invoke(currentScore);
     }
 
+    public void FullResetForRestart()
+    {
+        // スコア系を全部0に戻す
+        currentScore = 0;
+        TotalScore = 0;
+        TotalKills = 0;
+        DamageDealt = 0;
+
+        // HUDの数値を即座に0に反映
+        onScoreChanged?.Invoke(currentScore);
+        if (hud)
+        {
+            // HUDPresenterが「スコアを足し算で管理」してる場合は
+            // hud側にもリセット用メソッドが必要になることがある。
+            // もし hud に ResetScore() 的なのがあるなら呼んでOK。
+            // なければ今のままでも onScoreChanged でだいたい揃うはず。
+        }
+
+        // タイマーを今に合わせる（タイムボーナス用）
+        levelStartTime = Time.time;
+    }
+
+
 }

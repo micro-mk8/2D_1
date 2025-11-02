@@ -43,6 +43,10 @@ public class GameFlowController : MonoBehaviour
 
     [SerializeField] private StageClear stageClear;              // 全滅監視用
     [SerializeField] private M5FireBridge m5Bridge;              // M5入力ブリッジ
+    [SerializeField] private PlayStatsLogger playStats;
+    [SerializeField] private AudioManager audioManager;
+
+
 
     private GameState state = GameState.Title;
 
@@ -81,6 +85,8 @@ public class GameFlowController : MonoBehaviour
             ev.RemoveListener(OnM5ButtonPressed); // 二重登録防止
             ev.AddListener(OnM5ButtonPressed);
         }
+
+
     }
 
     private void Update()
@@ -173,6 +179,18 @@ public class GameFlowController : MonoBehaviour
     // ゲーム開始 / リトライ時に呼ばれる本体
     private void StartGame()
     {
+        if (playStats != null)
+        {
+            playStats.RegisterGameStart();
+        }
+
+
+            // ① スコア・タイマーをリセット
+        if (ScoringManager.Instance != null)
+        {
+            ScoringManager.Instance.FullResetForRestart();
+        }
+        
         // 時間を動かす
         Time.timeScale = 1f;
 
@@ -204,6 +222,7 @@ public class GameFlowController : MonoBehaviour
             }
         }
 
+
         // スコアやHUDの見た目をリセット
         ResetScoreAndHudOnly();
 
@@ -219,6 +238,11 @@ public class GameFlowController : MonoBehaviour
         SetMoversEnabled(true);
         SetFireEnabled(true);
         SetEnemySystemsEnabled(true);
+
+        if (audioManager != null)
+        {
+            audioManager.PlayBGM();
+        }
 
         // コールバック
         onGameStart?.Invoke();
@@ -241,6 +265,20 @@ public class GameFlowController : MonoBehaviour
         SetActiveSafe(titlePanel, false);
         SetActiveSafe(clearPanel, false);
 
+        if (audioManager != null)
+        {
+            audioManager.StopBGM();
+            audioManager.PlayGameOverJingle();
+        }
+
+
+        
+        if (playStats != null)
+        {
+            playStats.RegisterGameOver();
+        }
+
+
         // コールバック
         onGameOverShown?.Invoke();
 
@@ -252,6 +290,17 @@ public class GameFlowController : MonoBehaviour
     [ContextMenu("DEBUG/HandleGameClear()")]
     public void HandleGameClear()
     {
+
+            // すでにGameOverになっていたり、すでにGameClearしていたら何もしない
+        if (state != GameState.Playing)
+        {
+            // ここでreturnすることで、GameOver中には絶対にクリア演出が走らない
+            Debug.Log("[GF] HandleGameClear called but ignored because state=" + state);
+            return;
+        }
+
+        Debug.Log("[GF] HandleGameClear accepted");
+
         Debug.Log("[GF] HandleGameClear called");
 
         // 停止
@@ -270,10 +319,23 @@ public class GameFlowController : MonoBehaviour
             StartCoroutine(FadeCanvasGroup(clearCanvasGroup, 0f, 1f, gameClearFadeSec));
         }
 
+        if (audioManager != null)
+        {
+            audioManager.StopBGM();
+            audioManager.PlayGameClearJingle();
+        }
+
+
+
         // スコア最終確定（クリアボーナスなど）
         if (scoring != null)
         {
             scoring.ComputeAndAddClearTimeBonus();
+        }
+
+        if (playStats != null)
+        {
+            playStats.RegisterClear();
         }
 
         // UIにタイムとスコア反映

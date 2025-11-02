@@ -10,6 +10,7 @@ public class AllyBulletController : MonoBehaviour
     [SerializeField] private RectTransform bulletLayer;     // PlayAreaFrame の子にある BulletLayer
     [SerializeField] private RectTransform playAreaFrame;   // 境界
     [SerializeField] private RectTransform enemyRoot;       // ホーミング用ターゲット
+    [SerializeField] private AudioManager audioManager;     // ★ 追加：サウンド再生用
 
     [Header("プレハブ")]
     [SerializeField] private GameObject straightBulletPrefab;
@@ -86,6 +87,12 @@ public class AllyBulletController : MonoBehaviour
             m.SetSpeed(straightSpeed);
             m.SetUpwards(straightUpwards);
         }
+
+            // ★ ここでショット音を鳴らす
+        if (audioManager != null)
+        {
+            audioManager.PlayShoot();
+        }
     }
 
     private void SpawnHoming()
@@ -105,6 +112,12 @@ public class AllyBulletController : MonoBehaviour
             var so = m.GetComponent<BulletHomingUI>();
             so.GetType().GetField("speedPxPerSec", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)?.SetValue(so, homingSpeed);
             so.GetType().GetField("turnDegPerSec", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)?.SetValue(so, homingTurnDegPerSec);
+        }
+
+            // ★ ここでショット音を鳴らす
+        if (audioManager != null)
+        {
+            audioManager.PlayShoot();
         }
     }
 }

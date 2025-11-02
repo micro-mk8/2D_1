@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 538535063000710377}
   - component: {fileID: 6565821526911804560}
   - component: {fileID: 6228341748536460687}
+  - component: {fileID: -1229630272966948637}
   m_Layer: 5
   m_Name: BulletHomingPrefab
   m_TagString: Untagged
@@ -91,7 +92,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c14b0affb5ef1c248bbc211aab0dd435, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lifeTime: 4
+  lifeTime: 10
   container: {fileID: 0}
 --- !u!114 &538535063000710377
 MonoBehaviour:
@@ -136,3 +137,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 18aa604569f4e5a41aa75466478f0210, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &-1229630272966948637
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5353385381090303738}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31687e57eaf118e4ab5b708a18b4268d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  damage: 1

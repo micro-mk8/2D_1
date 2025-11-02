@@ -7,7 +7,7 @@ using UnityEngine;
 public class AllyBulletBaseUI : MonoBehaviour
 {
     [Header("Žõ–½(•b)")]
-    [SerializeField] private float lifeTime = 4f;
+    [SerializeField] private float lifeTime = 10f;
 
     [Header("‹«ŠE(”CˆÓ) - PlayAreaFrame ‚ðŠ„“–‚Ä‚é")]
     [SerializeField] private RectTransform container;

@@ -48,9 +48,16 @@ public class HUDPresenter : MonoBehaviour
     // --- 外部からスコア/残機を更新したい時用---
     public void AddScore(int delta)
     {
-        score = Mathf.Max(0, score + delta);
-        if (scoreText) scoreText.text = $"SCORE {score}";
+        // もう自前で += しない
+        // ScoringManager が正しい currentScore を持っているので、
+        // そっちを使ってスコア全体を表示に反映させる。
+        if (ScoringManager.Instance != null)
+        {
+            int now = ScoringManager.Instance.CurrentScore;
+            SetScore(now);
+        }
     }
+
 
     public void SetLives(int value)
     {
