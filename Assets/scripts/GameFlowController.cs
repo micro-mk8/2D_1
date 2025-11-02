@@ -81,6 +81,27 @@ public class GameFlowController : MonoBehaviour
         }
     }
 
+        private void Update()
+    {
+        // Spaceキーでスタート・リトライ
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            OnM5ButtonPressed();
+        }
+
+        // --- M5ボタンでも同じ挙動をするようにする ---
+        if (m5Bridge != null)
+        {
+            // UDPの最新rawが "FIRE" のとき（＝M5ボタン押下）
+            if (!string.IsNullOrEmpty(m5Bridge.udp.latestRaw) &&
+                m5Bridge.udp.latestRaw.StartsWith("FIRE"))
+            {
+                OnM5ButtonPressed();
+            }
+        }
+    }
+
+
 
 
 
