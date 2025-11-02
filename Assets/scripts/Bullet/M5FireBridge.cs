@@ -17,36 +17,28 @@ public class M5FireBridge : MonoBehaviour
 
     void Update()
     {
-        // UDPがなければ何もできない
+        // TimeScaleが0でもM5入力は通す
         if (udp == null) return;
 
-        // M5から来た生の文字列（例: "FIRE", "ACCEL..." みたいな想定）
         string raw = udp.latestRaw;
         if (string.IsNullOrEmpty(raw)) return;
 
-        // 同じrawを連続で処理しない
         if (raw == lastRaw) return;
         lastRaw = raw;
 
-        // ボタン押し合図かどうかを判定
         if (raw.StartsWith("FIRE"))
         {
-            // --- 1. プレイ中想定の弾発射 ----------------
             if (controller != null)
             {
-                // フラグや1発撃ちメソッドはあなたのAllyBulletControllerに合わせてください
                 controller.enableM5Fire = true;
                 controller.FireStraightOnce_FromM5();
             }
 
-            // --- 2. Start/Retry シグナル ----------------
-            // GameFlowController側が購読していれば、タイトル・リザルト中はここからスタート/リスタートできる
-            if (onFirePressedForStartRetry != null)
-            {
-                onFirePressedForStartRetry.Invoke();
-            }
+            // --- 追加: Pause中でもイベントを送る ---
+            onFirePressedForStartRetry?.Invoke();
         }
     }
+
 
     // GameFlowController から AddListener しやすいように公開
     public UnityEvent GetStartRetryEvent()

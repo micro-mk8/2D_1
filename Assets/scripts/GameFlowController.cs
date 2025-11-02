@@ -72,6 +72,16 @@ public class GameFlowController : MonoBehaviour
             playerRespawn.onGameOver.RemoveListener(HandleGameOver);
     }
 
+        private void Update()
+    {
+        // --- SpaceƒL[‚Å‚àM5‚Å‚àí‚É“ü—Í‚ğó‚¯æ‚é ---
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            OnM5ButtonPressed(); // Space‚àM5‚Æ“¯‚¶ˆ—‚ğ‹¤—L
+        }
+    }
+
+
 
 
     private void Start()
