@@ -45,6 +45,10 @@ public class GameFlowController : MonoBehaviour
     [SerializeField] private M5FireBridge m5Bridge;              // M5入力ブリッジ
     [SerializeField] private PlayStatsLogger playStats;
     [SerializeField] private AudioManager audioManager;
+    // 入力受付ディレイ
+    [SerializeField, Min(0f)] private float inputDelayAfterEnd = 1.0f; // 秒
+    private float nextAcceptInputTime = 0f;
+
 
 
 
@@ -97,16 +101,20 @@ public class GameFlowController : MonoBehaviour
             OnM5ButtonPressed(); // Spaceも最終的に同じ入口を通す
         }
 
-        // --- 2) M5の「FIRE」生信号でも Start / Retry ---
-        // ここは毎フレーム直接チェック（m5BridgeのMonoBehaviourが無効でもudp.latestRawは読める想定）
         if (m5Bridge != null && m5Bridge.udp != null)
         {
             string raw = m5Bridge.udp.latestRaw;
+
+            // ★ クールダウン中は入力を無視
+            if (Time.unscaledTime < nextAcceptInputTime)
+                return;
+
             if (!string.IsNullOrEmpty(raw) && raw.StartsWith("FIRE"))
             {
                 OnM5ButtonPressed();
             }
         }
+
 
         // --- 3) タイマー進行（プレイ中のみ） ---
         if (runTimer)
@@ -282,6 +290,9 @@ public class GameFlowController : MonoBehaviour
         // コールバック
         onGameOverShown?.Invoke();
 
+        nextAcceptInputTime = Time.unscaledTime + inputDelayAfterEnd;
+
+
         // 時間は止めない（止めるとUpdate自体も動くけどTime.timeScaleだけが0になるので
         // M5BridgeやこのUpdate内の処理はMonoBehaviour.Updateとしては動く。
         // もし完全停止したいなら Time.timeScale = 0f; にしてOK。
@@ -348,6 +359,9 @@ public class GameFlowController : MonoBehaviour
 
         // クリア画面中はゲーム内の時間を止める
         Time.timeScale = 0f;
+
+        nextAcceptInputTime = Time.unscaledTime + inputDelayAfterEnd;
+
     }
 
     private System.Collections.IEnumerator FadeCanvasGroup(CanvasGroup cg, float from, float to, float dur)
