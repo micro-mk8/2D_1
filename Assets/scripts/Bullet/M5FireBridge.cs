@@ -3,68 +3,52 @@ using UnityEngine.Events;
 
 public class M5FireBridge : MonoBehaviour
 {
-    [Header("References")]
-    [SerializeField] private AllyBulletController controller;  // player bullet shooter
-    [SerializeField] private UdpReceiver udp;                   // UDP input from M5
+    [Header("プレイヤー弾を撃つコントローラ")]
+    [SerializeField] private AllyBulletController controller;
 
-    [Header("Start/Retry trigger")]
-    [Tooltip("If true, when FIRE is received (and we're on title/gameover/etc.), raise start/retry event.")]
-    [SerializeField] private bool triggerStartRetryOnFire = true;
+    [Header("UDP受信 (latestRaw を読む)")]
+    [SerializeField] private UdpReceiver udp;
 
-    // GameFlowController will hook this in the Inspector
-    // and call StartOrRetry() when this event fires.
-    [SerializeField] private UnityEvent onFirePressedForStartRetry = new UnityEvent();
+    [Header("Start/Retry用イベント (GameFlowControllerが購読する)")]
+    [SerializeField] private UnityEvent onFirePressedForStartRetry;
 
-    private string lastRaw = null; // remember last packet so we don't spam every frame
-
-    void Reset()
-    {
-        if (controller == null)
-        {
-            controller = GetComponent<AllyBulletController>();
-        }
-
-        if (udp == null)
-        {
-            udp = FindObjectOfType<UdpReceiver>();
-        }
-    }
+    // 直前に読んだraw。連打で同じ文字列を何度も処理しないためのフィルタ
+    private string lastRaw = null;
 
     void Update()
     {
+        // UDPがなければ何もできない
         if (udp == null) return;
 
+        // M5から来た生の文字列（例: "FIRE", "ACCEL..." みたいな想定）
         string raw = udp.latestRaw;
         if (string.IsNullOrEmpty(raw)) return;
 
-        // skip duplicate packets
+        // 同じrawを連続で処理しない
         if (raw == lastRaw) return;
         lastRaw = raw;
 
-        // handle FIRE message
+        // ボタン押し合図かどうかを判定
         if (raw.StartsWith("FIRE"))
         {
-            // 1. normal shooting
+            // --- 1. プレイ中想定の弾発射 ----------------
             if (controller != null)
             {
+                // フラグや1発撃ちメソッドはあなたのAllyBulletControllerに合わせてください
                 controller.enableM5Fire = true;
                 controller.FireStraightOnce_FromM5();
             }
 
-            // 2. request start/retry
-            if (triggerStartRetryOnFire)
+            // --- 2. Start/Retry シグナル ----------------
+            // GameFlowController側が購読していれば、タイトル・リザルト中はここからスタート/リスタートできる
+            if (onFirePressedForStartRetry != null)
             {
                 onFirePressedForStartRetry.Invoke();
             }
         }
     }
 
-    // GameFlowController can turn this on/off
-    public void SetStartRetryTriggerEnabled(bool enable)
-    {
-        triggerStartRetryOnFire = enable;
-    }
-
+    // GameFlowController から AddListener しやすいように公開
     public UnityEvent GetStartRetryEvent()
     {
         return onFirePressedForStartRetry;
