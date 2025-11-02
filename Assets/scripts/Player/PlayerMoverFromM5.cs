@@ -5,6 +5,10 @@ public class PlayerMoverFromM5 : MonoBehaviour
 {
     [Header("感度（px/秒 per g）")]
     [SerializeField] private float pixelsPerG = 600f;
+    [Header("低速移動")]
+    [SerializeField, Range(0f, 1f)] private float slowMultiplier = 0.3f; // 押してる間の速度倍率
+    private bool isSlow = false;
+
 
     [Header("デッドゾーン（g）※閾値以下は無視")]
     [SerializeField, Range(0f, 0.5f)] private float deadZoneG = 0.10f;
@@ -34,7 +38,7 @@ public class PlayerMoverFromM5 : MonoBehaviour
 
     void Update()
     {
-        // キャリブレーションは PC キーボードの C のみ
+        // キャリブレーション
         if (Input.GetKeyDown(calibrateKey))
         {
             CaptureBias();
@@ -43,9 +47,12 @@ public class PlayerMoverFromM5 : MonoBehaviour
         var r = UdpReceiver.Instance;
         if (r == null) return;
 
-        // M5ボタン(FIRE)が押されたときのデータを無視する
-        if (!string.IsNullOrEmpty(r.latestRaw) && r.latestRaw.StartsWith("FIRE"))
-            return; // ←★これを追加。FIRE信号時は位置処理もキャリブレーションも止める
+        // --- M5ボタンの押下状態チェック ---
+        bool firePressed = !string.IsNullOrEmpty(r.latestRaw) && r.latestRaw.StartsWith("FIRE");
+        isSlow = firePressed; // 押してる間だけ true になる
+
+        // 押された瞬間のキャリブレーション対策 → ここは止めずにslow化だけ
+        // if (firePressed) return; ←これは削除 or コメントアウト
 
         Vector2 a = new Vector2(r.latestAccel.x, r.latestAccel.y);
         a *= inputScale;
@@ -59,7 +66,9 @@ public class PlayerMoverFromM5 : MonoBehaviour
         a.x = ApplySoftDeadzone(a.x, deadZoneG);
         a.y = ApplySoftDeadzone(a.y, deadZoneG);
 
-        rect.anchoredPosition += a * pixelsPerG * Time.deltaTime;
+        // --- 低速化を適用 ---
+        float speedFactor = isSlow ? slowMultiplier : 1f;
+        rect.anchoredPosition += a * pixelsPerG * speedFactor * Time.deltaTime;
     }
 
 
