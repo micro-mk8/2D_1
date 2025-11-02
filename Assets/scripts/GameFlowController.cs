@@ -58,49 +58,37 @@ public class GameFlowController : MonoBehaviour
         GoTitle(); // 起動時はタイトル状態
     }
 
+    // OnEnable は playerRespawn だけでOK
     private void OnEnable()
     {
         if (playerRespawn != null)
             playerRespawn.onGameOver.AddListener(HandleGameOver);
-
-        if (m5Bridge != null)
-        {
-            // M5からの"FIRE"通知イベントを購読する
-            m5Bridge.GetStartRetryEvent().AddListener(OnM5ButtonPressed);
-        }
     }
 
+    // OnDisable も同様
     private void OnDisable()
     {
         if (playerRespawn != null)
             playerRespawn.onGameOver.RemoveListener(HandleGameOver);
+    }
 
+
+
+    private void Start()
+    {
+        // --- onGameOver イベント購読 ---
+        if (playerRespawn != null)
+            playerRespawn.onGameOver.AddListener(HandleGameOver);
+
+        // --- M5FireBridge購読：Startで登録しておけばDisableされても残る ---
         if (m5Bridge != null)
         {
-            // 購読解除
-            m5Bridge.GetStartRetryEvent().RemoveListener(OnM5ButtonPressed);
+            var ev = m5Bridge.GetStartRetryEvent();
+            ev.RemoveListener(OnM5ButtonPressed);  // 重複防止
+            ev.AddListener(OnM5ButtonPressed);
         }
     }
 
-
-    private void Update()
-    {
-        if (runTimer) runTimeSec += Time.unscaledDeltaTime;
-
-        bool pressedRestart =
-            Input.GetKeyDown(KeyCode.Space) ||
-            Input.GetKeyDown(KeyCode.Return);
-
-        bool canRestart =
-            (state == GameState.Title ||
-             state == GameState.GameOver ||
-             state == GameState.GameClear);
-
-        if (canRestart && pressedRestart)
-        {
-            StartOrRetry();
-        }
-    }
 
 
     // ▼ 外部入口：UIボタン／M5ボタンからもこれを呼べばOK
