@@ -51,6 +51,8 @@ public class GameFlowController : MonoBehaviour
 
 
 
+    // GameClear時のリスタート入力制御
+    private bool canRestart = true;
 
     private GameState state = GameState.Title;
 
@@ -95,11 +97,20 @@ public class GameFlowController : MonoBehaviour
 
     private void Update()
     {
+
+        if (!canRestart) return;
+
+
         // --- 1) Spaceキーで Start / Retry ---
-        if (Input.GetKeyDown(KeyCode.Space))
+    if (Input.GetKeyDown(KeyCode.Space))
+    {
+        // クールダウン中は無視
+        if (Time.unscaledTime >= nextAcceptInputTime)
         {
-            OnM5ButtonPressed(); // Spaceも最終的に同じ入口を通す
+            OnM5ButtonPressed();
         }
+    }
+
 
         if (m5Bridge != null && m5Bridge.udp != null)
         {
@@ -336,6 +347,7 @@ public class GameFlowController : MonoBehaviour
             audioManager.PlayGameClearJingle();
         }
 
+        nextAcceptInputTime = Time.unscaledTime + inputDelayAfterEnd;
 
 
         // スコア最終確定（クリアボーナスなど）
@@ -359,8 +371,16 @@ public class GameFlowController : MonoBehaviour
 
         // クリア画面中はゲーム内の時間を止める
         Time.timeScale = 0f;
+        Debug.Log("[GF] HandleGameClear finished, state=" + state);
 
-        nextAcceptInputTime = Time.unscaledTime + inputDelayAfterEnd;
+        // リスタート入力を一時的に無効化してから時間を止める
+        canRestart = false;
+        StartCoroutine(DelayEnableRestartInput());
+
+        // クリア画面中はゲーム内の時間を止める
+        Time.timeScale = 0f;
+
+
 
     }
 
@@ -436,6 +456,16 @@ public class GameFlowController : MonoBehaviour
             }
         }
     }
+
+    private System.Collections.IEnumerator DelayEnableRestartInput()
+    {
+        // 1秒間リスタート入力を無効化
+        Debug.Log("[GF] Restart input disabled temporarily after GameClear");
+        yield return new WaitForSecondsRealtime(3.0f); // ← ここで待機時間を調整（例: 1.0秒）
+        canRestart = true;
+        Debug.Log("[GF] Restart input re-enabled");
+    }
+
 
     // ===== 小物ヘルパ =====
 
