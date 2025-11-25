@@ -672,7 +672,7 @@ MonoBehaviour:
   deadZoneG: 0
   inputScale: 1
   invertX: 1
-  invertY: 1
+  invertY: 0
   swapXY: 0
   bias: {x: 0, y: 0}
   autoCalibrateOnStart: 1
@@ -758,7 +758,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e9555aad435edba4383a79e16db8b1d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHP: 10
+  maxHP: 20
   currentHP: -1
   destroyOnDeath: 0
   disableHitboxOnDeath: 0
@@ -883,6 +883,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   controller: {fileID: 173458226}
   udp: {fileID: 1893121739}
+  gameFlowController: {fileID: 0}
   onFirePressedForStartRetry:
     m_PersistentCalls:
       m_Calls: []
@@ -904,7 +905,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &285757426
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1427,6 +1428,7 @@ GameObject:
   - component: {fileID: 385047215}
   - component: {fileID: 385047214}
   - component: {fileID: 385047213}
+  - component: {fileID: 385047217}
   m_Layer: 5
   m_Name: TitleCanvas
   m_TagString: Untagged
@@ -1518,6 +1520,76 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &385047217
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 385047212}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d27b8921cab7a2488a5cd59459b7985, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gameFlow: {fileID: 1250881223}
+  label: {fileID: 22429257}
+  enemyRoot: {fileID: 1522966226}
+  udp: {fileID: 1893121739}
+  longPressSec: 0.6
+  repeatBlockSec: 0.18
+  options:
+  - label: EASY
+    intervalSec: 0.7
+    burstCount: 3
+    useAimedTwin: 1
+    aimedSpeed: 360
+    twinOffsetX: 10
+    useSemicircle: 0
+    radialSpeed: 290
+    radialStepDeg: 20
+    useSplit: 0
+    splitMainSpeed: 220
+    splitAfterSec: 1
+    splitShards: 8
+    shardSpeed: 260
+    enemyHpMultiplier: 0.8
+    bossHpMultiplier: 0.9
+    scoreMultiplier: 0.8
+  - label: NORMAL
+    intervalSec: 0.5
+    burstCount: 5
+    useAimedTwin: 1
+    aimedSpeed: 420
+    twinOffsetX: 12
+    useSemicircle: 1
+    radialSpeed: 350
+    radialStepDeg: 15
+    useSplit: 0
+    splitMainSpeed: 260
+    splitAfterSec: 0.8
+    splitShards: 12
+    shardSpeed: 320
+    enemyHpMultiplier: 1
+    bossHpMultiplier: 1
+    scoreMultiplier: 1
+  - label: HARD
+    intervalSec: 0.4
+    burstCount: 6
+    useAimedTwin: 1
+    aimedSpeed: 520
+    twinOffsetX: 14
+    useSemicircle: 1
+    radialSpeed: 420
+    radialStepDeg: 12
+    useSplit: 1
+    splitMainSpeed: 320
+    splitAfterSec: 0.7
+    splitShards: 14
+    shardSpeed: 380
+    enemyHpMultiplier: 1.3
+    bossHpMultiplier: 1.5
+    scoreMultiplier: 1.2
 --- !u!1 &467958282
 GameObject:
   m_ObjectHideFlags: 0
@@ -2169,7 +2241,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &788198925
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3584,7 +3656,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.64705884}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -4485,6 +4557,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5916064667364945333, guid: ab5ca59b7f460484686b21053e28d562, type: 3}
+      propertyPath: aimedSpeed
+      value: 390
+      objectReference: {fileID: 0}
+    - target: {fileID: 5916064667364945333, guid: ab5ca59b7f460484686b21053e28d562, type: 3}
       propertyPath: playerRoot
       value: 
       objectReference: {fileID: 173458221}
@@ -4492,6 +4568,10 @@ PrefabInstance:
       propertyPath: bulletLayer
       value: 
       objectReference: {fileID: 585596482}
+    - target: {fileID: 5916064667364945333, guid: ab5ca59b7f460484686b21053e28d562, type: 3}
+      propertyPath: intervalSec
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5916064667364945333, guid: ab5ca59b7f460484686b21053e28d562, type: 3}
       propertyPath: playAreaFrame
       value: 
@@ -4504,6 +4584,10 @@ PrefabInstance:
       propertyPath: enemySplitMainPool
       value: 
       objectReference: {fileID: 540744686}
+    - target: {fileID: 5916064667364945333, guid: ab5ca59b7f460484686b21053e28d562, type: 3}
+      propertyPath: enablePattern2_Split
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6983873253303319252, guid: ab5ca59b7f460484686b21053e28d562, type: 3}
       propertyPath: container
       value: 

@@ -466,6 +466,28 @@ public class GameFlowController : MonoBehaviour
         Debug.Log("[GF] Restart input re-enabled");
     }
 
+    public bool CanAcceptRestartInput()
+    {
+        // まず、今がリスタート可能なステートかどうか
+        bool inEndState =
+            state == GameState.GameOver ||
+            state == GameState.GameClear ||
+            state == GameState.Title;
+
+        if (!inEndState)
+            return false;
+
+        // GameOver用の遅延がある場合（nextAcceptInputTime など）を確認
+        if (Time.unscaledTime < nextAcceptInputTime)
+            return false;
+
+        // GameClear用の遅延フラグ（canRestart）も確認
+        if (!canRestart)
+            return false;
+
+        return true;
+    }
+
 
     // ===== 小物ヘルパ =====
 
