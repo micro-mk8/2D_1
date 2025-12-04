@@ -1,0 +1,884 @@
+unityのスクリプトはC#
+
+1.C#の基礎構造
+
+usuing UnityEngine;
+
+public class Player : Monobehaviour
+{
+    int hp = 10; //フィールド
+
+    void Start(){ //unityイベント関数
+
+        hp = 100;
+
+    }
+
+    void Updete(){ //毎フレーム呼ばれる関数
+
+        Move();
+
+    }
+
+    void Move(){ //メソッド
+    
+        transform.Translate(1*time.deltaTime,0,0);
+
+    }
+    
+}
+
+<point>
+名称
+クラス          ・・・オブジェクトの設計図
+フィールド（変数）・・・クラスの持つデータ
+メソッド（関数） ・・・クラスの機能
+usuing　        ・・・ライブラリの読み込み
+namespace　　　　・・・名前の空間（クラスのグループ）
+
+2.C#の型
+
+基本型
+
+int     整数
+float   少数
+bool    true/false
+string  文字列
+char    1文字
+
+unityの独自型
+
+①Vector2/Bector3
+ 何を表す型？
+
+    ・Vector2…2次元のベクトル
+    ・Vector3…3次元のベクトル
+
+どちらも数字をまとめて持つ構造体
+
+ 例
+    // 2D移動（Vector2）
+    Vector2 velocity = new Vector2(3f, 0f);
+    transform.position += (Vector3)velocity * Time.deltaTime;
+
+    // 3D座標（Vector3）
+    transform.position = new Vector3(0f, 1f, 0f);
+
+演算が組み込み
+足し算・引き算・スカラー倍が簡単に書ける：
+    Vector3 a = new Vector3(1, 2, 3);
+    Vector3 b = new Vector3(0, 1, 0);
+
+    Vector3 c = a + b;      // (1, 3, 3)
+    Vector3 d = a * 2f;     // (2, 4, 6)
+    float len = a.magnitude; // 長さ
+    Vector3 n = a.normalized; // 長さ1に正規化
+
+②GameObject
+何を表す型？
+    ・シーンに存在する物体そのものを表すクラス
+        ・プレイヤー
+        ・エネミー
+        ・弾
+        ・UI
+        など
+
+GameObjectはコンポーネントの入れ物である
+・Transform
+・SpriteRenderer
+・Rigidbady
+・自作のC#
+　などがコンポーネント（部品）としてアタッチメントされる
+
+例
+    // 新しいオブジェクト生成
+    GameObject obj = new GameObject("Enemy");
+
+    // コンポーネントを追加
+    var rb = obj.AddComponent<Rigidbody2D>();
+
+    // 非表示にする
+    obj.SetActive(false);
+
+    // 他のスクリプトを取得
+    var player = GameObject.FindWithTag("Player");
+    var controller = player.GetComponent<PlayerController>();
+
+③Transform
+何を表す型？
+    ・位置・回転・スケールと親子関係を管理するコンポーネント
+    ・すべてのGameObjectは必ずTransformを1つもっている
+主な情報
+    ・position…ワールド座標（scene全体から見た位置）
+    ・localPosition…親からの相対位置
+    ・ratation…ワールド回転
+    ・localScale…拡大率（x,y,z）
+    ・parent…親のTransform
+
+例
+    // 位置を直接指定
+    transform.position = new Vector3(0, 1, 0);
+
+    // 少しだけ動かす
+    transform.Translate(Vector3.right * 5f * Time.deltaTime);
+
+    // 回転させる
+    transform.Rotate(0, 90f * Time.deltaTime, 0);
+
+    // 親子関係を設定
+    childTransform.parent = parentTransform;
+
+⑤Sprite（あんまりわからない、使わないと思うから放置で）
+何を表す型？
+
+2Dゲーム用の画像（テクスチャの一部） を表すアセット
+
+主に SpriteRenderer や UI の Image コンポーネントから使う
+
+使い方イメージ
+public Sprite idleSprite;
+public Sprite attackSprite;
+
+SpriteRenderer sr;
+
+void Start() {
+    sr = GetComponent<SpriteRenderer>();
+}
+
+void Attack() {
+    sr.sprite = attackSprite;  // 表示する絵を差し替え
+}
+
+
+スプライトシート（1枚の大きな画像を分割）から複数の Sprite を作って、
+アニメーションでパラパラ漫画のように切り替えたりできる
+
+⑤AudioClip
+何を表す型？
+    ・音声データ（SEやBGM）を表すアセット
+    ・再生するのはAudioSourceというコンポーネント
+
+例
+    public AudioClip shotSE;
+    AudioSource audioSource;
+
+    void Start() {
+        audioSource = GetComponent<AudioSource>();
+    }
+
+    void Shoot() {
+        audioSource.PlayOneShot(shotSE);
+    }
+
+⑥まとめ
+・これらはunityが用意した特別な型
+・using UnityEngine;　すると使える
+
+
+
+3.C#のアクセス修飾子
+
+public      外部からでも利用可能（Unityinspectorでも表示）
+private     クラス内部のみ
+protected   派生クラスのみ
+internal    同じアセンブリ内
+
+unityで使われるやつ(public or private + [SerializeField])
+
+[SerializeField] private int hp;
+
+⇒privateのままInspectorに表示できる
+
+
+4.C#のクラスとインスタンス
+
+クラス（設計図みたいなの）
+
+public class Enemy{
+    public int hp;
+}
+
+インスタンス（実体）       //よくわかってない
+Enemy e = new Enemy();
+e.hp = 10;
+
+unityではgameobjectにアタッチされたスクリプト=クラスのインスタンス
+
+
+5.C#のメソッドの書き方
+
+int Add(int a, int b){
+
+    return a + b;
+}
+
+・引数（a,b）
+・戻り値（int）
+
+①そもそもメソッドとは何？
+    ・処理に名前を付けてまとめた者
+    ・足し算をしたい、だーめじ計算をしたい、スコアを更新したいなどを
+    　毎回べた書きをせず、1か所にまとめておく仕組み
+
+②形を分解してみる
+
+int ADd(int a, int b)
+
+ (1)int...戻り値の型
+ このメソッドはint型の値を返すので先頭にintとかく
+ もし何も返さないのならvoidを使う
+
+ 例
+void ShowMessage(){
+    Console.WriteLine("Hello");
+}
+
+ (2)Add...メソッド名
+ メソッドの名前
+ 基本ルール
+    ・英単語の先頭を大文字にすることが多い
+    ・動詞＋名詞が多い：AddScore/MovePlayer/UdpReceverなど
+
+ (3)int a, int d ...引数リスト
+ （）の中には、メソッドに渡したい値の一覧を書く
+　つまり、int型のaとbを受け取って、その和を返すメソッドという意味　
+　引数がないメソッド：
+　void ResetGame(){
+    // 何も受け取らない
+　}
+
+ (3)本体の｛｝の中身
+ ｛から｝までがそのメソッドの処理の塊
+ この中でしか使えないローカル変数も定義できる
+
+ return...戻り値を返す
+ 　・returnは「このメソッドの結果として、この値を返す」という意味
+    戻り値の型がintなのでa+bもintになる式でなければいけない
+    returnが実行された時点で、そのメソッドはそこで終了する
+    
+もしvoidメソッドなら、return; だけ書くことになる
+
+ (4)このメソッドを呼び出す
+ メソッドを書いただけだと何も起きないので、どこかから呼び出す必要がある。
+ 例：同じクラスの中で呼ぶ
+    int Add(int a, int b)
+    {
+        return a + b;
+    }
+
+    void Test()
+    {
+        int x = Add(3, 5);   // Add を呼び出して、その結果(8)が x に入る
+        Console.WriteLine(x); // 8 と表示
+    }
+
+ポイント：
+
+Add(3, 5) で a に 3、b に 5 が入る
+
+メソッド内部の return a + b; により 8 が返る
+
+それを x に代入して使用
+
+ (5)修飾子を付ける
+
+実際の C# / Unity では、たいてい次のような形になる。
+
+    public int Add(int a, int b)
+    {
+        return a + b;
+    }
+
+public とは？
+
+アクセス修飾子と呼ばれる。
+
+「どこからアクセスできるか」を決めるキーワード。
+
+代表的なもの：
+
+public : どこからでも呼び出せる
+
+private : 同じクラスの中からしか呼び出せない（省略時はだいたいこれ）
+
+Unity の MonoBehaviour のメソッドも同じような形：
+
+    public void DamagePlayer(int amount)
+    {
+        hp -= amount;
+    }
+
+ (6)static メソッドとの違い
+
+クラスの「インスタンス」に関係なく使えるメソッドは static をつける：
+
+    public static int Add(int a, int b)
+    {
+        return a + b;
+    }
+
+
+この場合の呼び出し方：
+
+int x = MathUtil.Add(3, 5);  // 例：MathUtil というクラスにある static メソッド
+
+
+Unity の Mathf も static メソッドの集まり：
+
+    float r = Mathf.Clamp(value, 0f, 1f);
+
+ (7)いろんなパターンのメソッド例
+戻り値なし（void）＋ 引数あり
+    public void SetHP(int hp)
+    {
+        currentHP = hp;
+    }
+
+戻り値あり ＋ 引数なし
+    public int GetHP()
+    {
+        return currentHP;
+    }
+
+複数行のロジックをまとめる
+    public int CalcDamage(int attack, int defense, float multiplier)
+    {
+        float raw = (attack - defense) * multiplier;
+        int dmg = Mathf.Max(1, Mathf.RoundToInt(raw));
+        return dmg;
+    }
+
+ (8)Unity 的な具体例
+
+ イメージした例：
+
+    public void SpawnBullet(Vector2 position, Vector2 direction, float speed)
+    {
+        GameObject b = bulletPool.Get();      // 弾オブジェクトをプールから取得
+        b.transform.position = position;
+        b.GetComponent<Rigidbody2D>().velocity = direction.normalized * speed;
+    }
+
+
+public void SpawnBullet(...) がメソッド宣言
+
+中に「弾を出す処理」をまとめておくことで、
+他の場所では SpawnBullet(...) を呼ぶだけで済むようになる
+
+
+
+6.C#の条件分岐の例
+
+if(hp <= 0){
+    Die();
+}
+else if (hp < 30){
+    LowHpWarning();
+}
+else{
+    Normal();
+}
+
+7.C#のループの例
+
+for(int i = 0; i<10 ; i++){
+
+}
+
+foreach(var e in enemies){
+    e.hp -= 1;
+}
+
+    1. そもそも foreach ってなに？
+
+    foreach (var e in enemies)
+    {
+        e.hp -= 1;
+    }
+
+
+    これは、
+
+    「enemies という“まとまり（配列・リストなど）に入っている要素を、先頭から順番に e に取り出して、中の処理を繰り返す」
+
+    という意味の文。
+
+    enemies … 敵がたくさん入っている配列 or リスト
+
+    e … その中の 1体分の敵 を指す変数（ループの中でだけ使える）
+
+    in … 「の中の」という意味
+
+    { e.hp -= 1; } … 1体の敵に対して行う処理（ここでは HP を1減らす）
+
+    なので、「全ての敵の HP を1減らす」 という処理になる。
+
+    2. foreach を日本語で一行にすると
+    foreach (var e in enemies)
+
+
+    は、自然語にすると：
+
+    「enemies の中にいるキャラを、1人ずつ e という名前で取り出して…」
+
+    という意味。
+
+    その1人(e)に対してやりたいことを、中カッコ { ... } の中に書く、という形。
+
+    3. for で書くとどうなるか
+
+    同じことをふつうの for で書くとこうなる：
+
+    for (int i = 0; i < enemies.Length; i++)
+    {
+        enemies[i].hp -= 1;
+    }
+
+    for の特徴
+
+    自分で インデックス i を管理する必要がある
+
+    配列なら enemies.Length、リストなら enemies.Count を自分で書く
+
+    書く量が少し多い
+
+    foreach の特徴
+
+    インデックスは意識しない
+
+    enemies[i] と書かなくていい
+
+    「全部回したいだけ」のときは読みやすい
+
+    4. 1ステップずつ追いかけてみる
+
+    enemies に3体の敵が入っているとする：
+
+    Enemy[] enemies = new Enemy[3];
+    // enemies[0], enemies[1], enemies[2] が入っているイメージ
+
+
+    foreach はこの順番で動く：
+
+    最初のループ
+
+    e には enemies[0] が入る
+
+    中身の処理 e.hp -= 1; が実行 → enemies[0].hp が 1 減る
+
+    次のループ
+
+    e には enemies[1] が入る
+
+    e.hp -= 1; → enemies[1].hp が 1 減る
+
+    次のループ
+
+    e には enemies[2] が入る
+
+    e.hp -= 1; → enemies[2].hp が 1 減る
+
+    もう要素がない → ループ終了
+
+    ポイント：
+    e は毎回「別の敵」を指すように変わっていくだけで、実体は enemies 配列の中身そのもの。
+
+    5. var ってなに？
+
+    foreach (var e in enemies)
+
+
+    の var は「型をコンパイラに自動で推論させる」キーワードで、
+
+    enemies が Enemy[]（Enemyの配列）なら
+    → e の型は Enemy
+
+    enemies が List<GameObject> なら
+    → e の型は GameObject
+
+    と、右側のコレクションの要素の型から自動で決まる。
+
+    もちろん、明示的に書いても大丈夫：
+
+    foreach (Enemy e in enemies) { ... }
+    foreach (GameObject e in enemies) { ... }
+
+    6. Unity でよくある foreach の使い方
+    ① 子オブジェクトを全部回す
+    foreach (Transform child in transform)
+    {
+        child.gameObject.SetActive(false);
+    }
+
+
+    このオブジェクト (transform) の子を、1つずつ child として取り出して、非表示にする例。
+
+    ② リストの中身全部に何かする
+    foreach (var enemy in enemyList)
+    {
+        enemy.TakeDamage(10);
+    }
+
+
+    enemyList に登録してある敵全員に 10ダメージ を与える。
+
+    7. 「中のオブジェクトを書き換えていいの？」問題
+    これは OK
+    foreach (var e in enemies)
+    {
+        e.hp -= 1;   // フィールド(中身)を書き換えているのでOK
+    }
+
+
+    e は「Enemy型のオブジェクトへの参照」を持っているので、
+
+    e.hp を変える = 元の enemies[i].hp が変わる。
+
+    これは NG（コンパイルエラー）
+    foreach (var e in enemies)
+    {
+        e = null;  // e 自体を別のものに代入 → C#では禁止
+    }
+
+
+    foreach で使うループ変数 e 自体は「読み取り専用」。
+
+    なので、e = ... のように 丸ごと入れ替える ことはできない。
+
+    8. もう少し内部の仕組み（ざっくり）
+
+    実は foreach は裏側でだいたいこんなことをしている（イメージ）：
+
+    var enumerator = enemies.GetEnumerator();
+    while (enumerator.MoveNext())
+    {
+        var e = enumerator.Current;
+        e.hp -= 1;
+    }
+
+
+    GetEnumerator() で「順番に要素を取り出すための装置」を取り出す
+
+    MoveNext() で「次の要素があるかどうか」をチェックしながら進む
+
+    Current に「今の要素」が入っている
+
+    配列・リスト・List<T>・Transform など、「foreach で回せるもの」は
+    この “装置”（列挙子＝Enumerator）を持っている。
+
+    この仕組みのおかげで、C# は
+
+    配列
+
+    リスト
+
+    子オブジェクト
+
+    独自クラス（自分で GetEnumerator() 実装すれば）
+
+    など、いろいろな「集まり」を同じ foreach 構文で回せるようになっている。
+
+    9. foreach を使うか for を使うかの目安
+
+    全部の要素に同じ処理をしたいだけ
+    → foreach が読みやすくておすすめ
+
+    インデックス（何番目か）も使いたい / 一部だけ見たい
+    → for の方が扱いやすいことも多い
+
+    for (int i = 0; i < enemies.Length; i++)
+    {
+        if (i % 2 == 0) enemies[i].hp -= 1;
+    }
+
+
+    要素を追加・削除したい
+    → 基本的に foreach の中でコレクションを変更するのはNG
+    （List<T> の Remove などをすると例外が出る）ので、for を使うか、別のやり方を取る必要がある。
+
+
+
+
+8.C#のリスト（List<T>）
+
+List<int> numbers = new List<int>();
+numbers.Add(3);
+numbers.Add(5);
+
+Unity で最も使われるコレクション。
+
+    9-1. List<T> って何？
+
+    「サイズを後から自由に増やしたり減らしたりできる配列」 だと思っていい。
+
+    配列（int[]）は：
+
+    長さが固定（あとから増やせない）
+
+    要素数を変えたいときは、新しい配列を作り直す必要がある
+
+    一方、List<T> は：
+
+    Add() でどんどん追加できる
+
+    Remove() で削除できる
+
+    Count で現在の要素数が分かる
+
+    9-2. 基本の使い方
+    using System.Collections.Generic;  // List を使うときに必要
+
+    List<int> numbers = new List<int>();
+
+    numbers.Add(3);
+    numbers.Add(5);
+    numbers.Add(10);
+
+    Debug.Log(numbers[0]);  // 3
+    Debug.Log(numbers[1]);  // 5
+
+    Debug.Log(numbers.Count);  // 要素数: 3
+
+
+    List<int> … 「int 型のリスト」
+
+    new List<int>() … 空のリストを作る
+
+    Add(値) … 後ろに 1 つ追加
+
+    numbers[i] … i 番目の要素（0 始まり）
+
+    Count … 要素数（配列の Length に相当）
+
+    9-3. T って何？（ジェネリクス）
+
+    List<T> の T には 「中に入れたい型」 を入れる。
+
+    List<int> … int のリスト
+
+    List<string> … string のリスト
+
+    List<GameObject> … GameObject のリスト
+
+    例コード：
+
+    public List<DifficultyOption> options = new List<DifficultyOption>();
+
+
+    DifficultyOption 型の要素をいくつでも入れられる箱
+
+    Inspector からも中身を編集できる
+
+    9-4. 要素の追加・削除・アクセス
+    追加
+    options.Add(new DifficultyOption
+    {
+        label = "HARD",
+        intervalSec = 0.4f,
+        // …他のフィールドもここに…
+    });
+
+    特定の位置に挿入
+    options.Insert(0, newOption); // 先頭に入れる
+
+    削除
+    options.Remove(targetOption);      // 中身が一致する要素を削除
+    options.RemoveAt(2);               // インデックス 2 の要素を削除
+    options.Clear();                   // 全削除
+
+    読み書き
+    DifficultyOption d = options[0];   // 0 番目を取り出し
+    options[1] = d;                    // 1 番目に代入
+
+    9-5. 繰り返し処理（ループ）
+
+    よく使うのは for と foreach。
+
+    for 文
+    for (int i = 0; i < options.Count; i++)
+    {
+        Debug.Log(options[i].label);
+    }
+
+    foreach 文
+    foreach (var d in options)
+    {
+        Debug.Log(d.label);
+    }
+
+
+    読み出しだけなら foreach が読みやすい
+
+    要素を入れ替えたり削除したいときは for の方が安全
+
+    9-6. List と配列の違い（Unityでよく出るポイント）
+        配列 (T[])	List<T>
+    サイズ変更	できない	Add/Remove で簡単に変えられる
+    要素数取得	Length	Count
+    Inspector	配列も表示できる	List も表示できる
+    使いやすさ	固定長なら軽い	柔軟で扱いやすい
+
+    Unity で「敵のリスト」「弾のリスト」「難易度設定のリスト」みたいに、
+    後から増減しそうなもの はほぼ List<T> 一択と思っていいレベルでよく使う。
+
+    9-7. Unity Inspector と List<T>
+
+    public または [SerializeField] を付けると、Inspector に表示できる。
+
+    [SerializeField]
+    private List<GameObject> enemyPrefabs;
+
+
+    Unity エディタ上で「要素サイズ」を増やすと、中にプレハブをドラッグ＆ドロップ可能
+
+    スクリプト側では enemyPrefabs[i] でアクセスできる
+
+    DifficultySelectController の
+
+    public List<DifficultyOption> options = new List<DifficultyOption>();
+
+
+    のこれは、
+
+    Inspector の options で難易度を好きなだけ追加して
+
+    それぞれの intervalSec や burstCount をいじって
+
+    タイトル画面で切り替えて遊べる
+
+    という設計になっている。
+
+
+
+9.unityのC#で重要概念
+①MonoBehaviour
+unityのスクリプトは通常これを継承する。
+
+②unityイベント関数
+Awake()             オブジェクト生成直後
+Start()             最初のUpdateの前
+Update()            毎フレーム更新
+FixedUpdate()       物理演算の更新
+ONCollisionEnter()  衝突時
+OnTriggerEnter()    トリガー接触時
+
+
+10.C#のプロパティ
+    1. そもそも C# のプロパティとは何か
+
+    プロパティ（property）は、
+    フィールド（変数）を安全に管理しつつ、外部から読み書きできるようにする仕組み。
+
+    フィールド（変数）
+    public int hp;
+
+    プロパティ（property）
+    public int HP { get; private set; }
+
+
+    見た目は似ているけど役割が全然違う。
+
+    2. フィールドとの違い（ここが重要）
+    項目	フィールド	プロパティ
+    外部からのアクセス制御	難しい	自由に制御できる
+    値の変更時のチェック	できない	setter でチェック可能
+    Unity Inspector に出るか	public なら出る	public でも出ない（必要なら SerializeField）
+    ゲームオブジェクトの情報管理	弱い	強い（処理を追加できる）
+
+    プロパティは「変数」ではなく
+    “メソッド（関数）を内蔵した変数のようなもの”
+    と思うと理解しやすい。
+
+    3. プロパティの基本的な形（ゲッターとセッター）
+     ① get と set が両方ある（読み書き可）
+    public int HP { get; set; }
+
+     ② set を private にする（Unityで一番よく使う形）
+    public int HP { get; private set; }
+
+    意味
+
+    外部からは読み取りだけ許可
+
+    内部（クラス内）からは変更できる
+
+    Unity で HP やスコアなど「勝手に変更されたくない値」はこの形が最も使われる。
+
+    4. “プロパティ”は中身が自動生成されている
+
+    これ ↓ は 省略形 。
+
+    public int HP { get; private set; }
+
+
+    内部ではこうなっている：
+
+    private int _hp;
+
+    public int HP 
+    { 
+        get { return _hp; } 
+        private set { _hp = value; }
+    }
+
+
+    つまりプロパティは
+    “裏で隠れているフィールドを操作している”
+    だけ。
+
+    5. Unity での実践例（よくある使い方）
+    ① HP やスコアを管理しやすい
+    public int HP { get; private set; }
+
+    public void Damage(int amount)
+    {
+        HP -= amount;
+        if (HP <= 0) Die();
+    }
+
+     なぜ set が private？
+
+    他のスクリプトからこうされるのを防ぐため：
+
+    player.HP = 9999;  // ←勝手に変更される危険
+
+
+    プロパティを使えば防げる。
+
+    ② 設定変更時に処理を挟める
+    private int _hp;
+    public int HP
+    {
+        get { return _hp; }
+        private set
+        {
+            _hp = value;
+            UpdateHPUI();   // ← HP が変わったら UI 更新
+        }
+    }
+
+     これがプロパティの最大の強み
+
+    値が変わった瞬間に追加処理を走らせられる
+
+    外部のスクリプトに悪影響がない
+
+    コードが安全で管理しやすい
+
+    6. Unity Inspector とプロパティの関係
+    プロパティは Inspector に表示されない
+    public int HP { get; private set; }   // Inspector に出ない
+
+    Inspector に出したいなら「フィールド」を使う
+    [SerializeField] private int hp;
+
+    そしてその値をプロパティで公開する形が最強
+    [SerializeField] private int hp;
+    public int HP => hp;   // 読み取り専用プロパティ
+
+
+    Inspector で値を設定しつつ、
+    外部からは安全に読み取れる。
+
+
+11.

@@ -2,30 +2,30 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// –¡•û’e‚Ì”­Ë§ŒäBÄ¶‘O‚ÉInspector‚Ìƒ`ƒFƒbƒN‚Å—LŒø/–³Œø‚ğØ‘Ö‰Â”\B
+/// ï¿½ï¿½ï¿½ï¿½ï¿½eï¿½Ì”ï¿½ï¿½Ëï¿½ï¿½ï¿½Bï¿½Äï¿½ï¿½Oï¿½ï¿½Inspectorï¿½Ìƒ`ï¿½Fï¿½bï¿½Nï¿½Å—Lï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø‘Ö‰Â”\ï¿½B
 /// </summary>
 public class AllyBulletController : MonoBehaviour
 {
-    [Header("QÆ")]
-    [SerializeField] private RectTransform bulletLayer;     // PlayAreaFrame ‚Ìq‚É‚ ‚é BulletLayer
-    [SerializeField] private RectTransform playAreaFrame;   // ‹«ŠE
-    [SerializeField] private RectTransform enemyRoot;       // ƒz[ƒ~ƒ“ƒO—pƒ^[ƒQƒbƒg
-    [SerializeField] private AudioManager audioManager;     // š ’Ç‰ÁFƒTƒEƒ“ƒhÄ¶—p
+    [Header("ï¿½Qï¿½ï¿½")]
+    [SerializeField] private RectTransform bulletLayer;     // PlayAreaFrame ï¿½Ìqï¿½É‚ï¿½ï¿½ï¿½ BulletLayer
+    [SerializeField] private RectTransform playAreaFrame;   // ï¿½ï¿½ï¿½E
+    [SerializeField] private RectTransform enemyRoot;       // ï¿½zï¿½[ï¿½~ï¿½ï¿½ï¿½Oï¿½pï¿½^ï¿½[ï¿½Qï¿½bï¿½g
+    [SerializeField] private AudioManager audioManager;     // ï¿½ï¿½ ï¿½Ç‰ï¿½ï¿½Fï¿½Tï¿½Eï¿½ï¿½ï¿½hï¿½Äï¿½ï¿½p
 
-    [Header("ƒvƒŒƒnƒu")]
+    [Header("ï¿½vï¿½ï¿½ï¿½nï¿½u")]
     [SerializeField] private GameObject straightBulletPrefab;
     [SerializeField] private GameObject homingBulletPrefab;
 
-    [Header("—LŒø/–³ŒøiÄ¶‘O‚ÉØ‘Öj")]
+    [Header("ï¿½Lï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ï¿½iï¿½Äï¿½ï¿½Oï¿½ÉØ‘Öj")]
     public bool enableStraight = true;
     public bool enableHoming = false;
     public bool enableM5Fire = false; 
 
-    [Header("˜AËİ’è")]
-    [SerializeField] private float straightFireRate = 6f; // 1•b‚ ‚½‚è
+    [Header("ï¿½Aï¿½Ëİ’ï¿½")]
+    [SerializeField] private float straightFireRate = 6f; // 1ï¿½bï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     [SerializeField] private float homingFireRate = 2f;
 
-    [Header("’eƒpƒ‰ƒ[ƒ^iŠù’èj")]
+    [Header("ï¿½eï¿½pï¿½ï¿½ï¿½ï¿½ï¿½[ï¿½^ï¿½iï¿½ï¿½ï¿½ï¿½j")]
     [SerializeField] private float straightSpeed = 900f;
     [SerializeField] private bool straightUpwards = true;
 
@@ -33,7 +33,7 @@ public class AllyBulletController : MonoBehaviour
     [SerializeField] private float homingTurnDegPerSec = 360f;
 
     private float straightTimer, homingTimer;
-    private RectTransform rect; // ƒvƒŒƒCƒ„[i©•ªj
+    private RectTransform rect; // ï¿½vï¿½ï¿½ï¿½Cï¿½ï¿½ï¿½[ï¿½iï¿½ï¿½ï¿½ï¿½ï¿½j
 
     void Awake() => rect = GetComponent<RectTransform>();
 
@@ -64,14 +64,14 @@ public class AllyBulletController : MonoBehaviour
         }
     }
 
-    //3‚Â–ÚFM5ƒ{ƒ^ƒ“‚ÅŒ‚‚Â—p‚ÌŒöŠJƒtƒbƒN
+    //3ï¿½Â–ÚFM5ï¿½{ï¿½^ï¿½ï¿½ï¿½ÅŒï¿½ï¿½Â—pï¿½ÌŒï¿½ï¿½Jï¿½tï¿½bï¿½N
     public void FireStraightOnce_FromM5()
     {
         if (!enableM5Fire || straightBulletPrefab == null) return;
         SpawnStraight();
     }
 
-    // ---- ¶¬ˆ— ----
+    // ---- ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ----
     private void SpawnStraight()
     {
         var go = Instantiate(straightBulletPrefab, bulletLayer);
@@ -79,7 +79,7 @@ public class AllyBulletController : MonoBehaviour
         var m = go.GetComponent<BulletStraightUI>();
 
         var rt = go.GetComponent<RectTransform>();
-        rt.anchoredPosition = rect.anchoredPosition; // ƒvƒŒƒCƒ„[ˆÊ’u‚©‚ç
+        rt.anchoredPosition = rect.anchoredPosition; // ï¿½vï¿½ï¿½ï¿½Cï¿½ï¿½ï¿½[ï¿½Ê’uï¿½ï¿½ï¿½ï¿½
 
         if (b != null) b.Init(playAreaFrame);
         if (m != null)
@@ -88,7 +88,7 @@ public class AllyBulletController : MonoBehaviour
             m.SetUpwards(straightUpwards);
         }
 
-            // š ‚±‚±‚ÅƒVƒ‡ƒbƒg‰¹‚ğ–Â‚ç‚·
+            // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ÅƒVï¿½ï¿½ï¿½bï¿½gï¿½ï¿½ï¿½ï¿½Â‚ç‚·
         if (audioManager != null)
         {
             audioManager.PlayShoot();
@@ -108,13 +108,13 @@ public class AllyBulletController : MonoBehaviour
         if (m != null)
         {
             m.Setup(enemyRoot, bulletLayer);
-            // ‘¬“xE‰ñ“ª‚Ìã‘‚«
+            // ï¿½ï¿½ï¿½xï¿½Eï¿½ñ“ª‚Ìã‘ï¿½ï¿½
             var so = m.GetComponent<BulletHomingUI>();
             so.GetType().GetField("speedPxPerSec", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)?.SetValue(so, homingSpeed);
             so.GetType().GetField("turnDegPerSec", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)?.SetValue(so, homingTurnDegPerSec);
         }
 
-            // š ‚±‚±‚ÅƒVƒ‡ƒbƒg‰¹‚ğ–Â‚ç‚·
+            // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ÅƒVï¿½ï¿½ï¿½bï¿½gï¿½ï¿½ï¿½ï¿½Â‚ç‚·
         if (audioManager != null)
         {
             audioManager.PlayShoot();

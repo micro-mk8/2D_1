@@ -15,12 +15,12 @@ public class EnemySplitBulletUI : MonoBehaviour
     private int shardCount;
     private float shardSpeed;
 
-    // ★追加：破片を借りるためのプール参照
+    //破片を借りるためのプール参照
     private GameObjectPool shardPool;
 
     void Awake() => rect = GetComponent<RectTransform>();
 
-    // ★変更：pool を受け取れるように引数を追加（既定は null）
+    //pool を受け取れるように引数を追加（既定は null）
     public void Setup(
         RectTransform spaceRT,
         RectTransform containerRT,
@@ -64,7 +64,7 @@ public class EnemySplitBulletUI : MonoBehaviour
             float rad = deg * Mathf.Deg2Rad;
             Vector2 v = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad)) * shardSpeed;
 
-            // ★変更：プールがあれば Get、無ければ Instantiate にフォールバック
+            //プールがあれば Get、無ければ Instantiate にフォールバック
             GameObject go = shardPool ? shardPool.Get()
                                       : Object.Instantiate(shardPrefab, space);
 

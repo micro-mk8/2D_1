@@ -25,7 +25,7 @@ public class UdpReceiver : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
-        if (transform.parent != null) transform.SetParent(null); // ルート化
+        if (transform.parent != null) transform.SetParent(null); // ルート化nanikore
         DontDestroyOnLoad(gameObject);
     }
 
@@ -88,7 +88,7 @@ public class UdpReceiver : MonoBehaviour
                 s = Encoding.UTF8.GetString(res.Buffer);
                 latestRaw = s.Trim();
 
-                // 推奨: CSV "ax,ay,az" （小数点はピリオド）
+                // CSV "ax,ay,az" （小数点はピリオド）
                 if (latestRaw.Contains(","))
                 {
                     var sp = latestRaw.Split(',');

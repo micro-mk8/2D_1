@@ -15,7 +15,7 @@ public class DifficultySelectController : MonoBehaviour
     [Header("操作設定")]
     [SerializeField, Min(0.1f)] private float longPressSec = 0.6f;
     [SerializeField, Min(0.05f)] private float repeatBlockSec = 0.18f;
-
+    [SerializeField, Min(0.05f)] private float fireClusterGapSec = 0.25f;
     [Header("難易度一覧")]
     public List<DifficultyOption> options = new List<DifficultyOption>();
 
@@ -63,7 +63,14 @@ public class DifficultySelectController : MonoBehaviour
     private bool m5Down = false;
     private float m5DownTime = 0f;
     private string lastRaw = null;
-    
+
+    // M5用の長押し判定用
+    bool m5Pressing = false;      // FIRE「かたまり」が進行中か
+    bool m5LongTriggered = false; // この押しで長押し確定済みか
+    float m5PressDuration = 0f;   // この押しの累積時間
+    float lastFireTime = -999f;   // 最後にFIREを見た時刻
+
+
     void Start()
     {
         if (gameFlow != null)
@@ -105,13 +112,12 @@ public class DifficultySelectController : MonoBehaviour
 
         float now = Time.unscaledTime;
 
-        // Space 短押し = 切替
+        // --- キーボード操作（そのまま） ---
         if (now >= keyRepeatBlockUntil)
         {
             if (Input.GetKeyDown(KeyCode.LeftArrow)) { Prev(); keyRepeatBlockUntil = now + repeatBlockSec; }
             if (Input.GetKeyDown(KeyCode.RightArrow)) { Next(); keyRepeatBlockUntil = now + repeatBlockSec; }
         }
-        // Space 長押し = 決定
         if (Input.GetKey(KeyCode.Space))
         {
             m5DownTime += Time.unscaledDeltaTime;
@@ -119,24 +125,54 @@ public class DifficultySelectController : MonoBehaviour
         }
         if (Input.GetKeyUp(KeyCode.Space)) m5DownTime = 0f;
 
-        // M5 FIRE（短押し=切替 / 長押し=決定）
+
+        // --- M5 FIRE（短押し=切替 / 長押し=決定）---
         if (udp != null)
         {
             var raw = udp.latestRaw;
             bool isFire = !string.IsNullOrEmpty(raw) && raw.StartsWith("FIRE");
 
-            if (isFire && !m5Down)
+            if (isFire)
             {
-                if (raw != lastRaw) Next();
-                m5Down = true;
-                m5DownTime = 0f;
+                // 新しい押しの開始
+                if (!m5Pressing)
+                {
+                    m5Pressing = true;
+                    m5PressDuration = 0f;
+                    m5LongTriggered = false;
+                }
+
+                // 押されている間、時間を足す
+                m5PressDuration += Time.unscaledDeltaTime;
+
+                // まだ長押し扱いになっていなくて、しきい値を超えたら決定
+                if (!m5LongTriggered && m5PressDuration >= longPressSec)
+                {
+                    m5LongTriggered = true;
+                    ConfirmAndStart();
+                    // ここで早期リターンしておけば、このフレームで余計な処理はしない
+                    return;
+                }
+
+                lastFireTime = now;
             }
-            if (isFire && m5Down)
+            else
             {
-                m5DownTime += Time.unscaledDeltaTime;
-                if (m5DownTime >= longPressSec) { ConfirmAndStart(); return; }
+                // FIREが来ていない間隔が fireClusterGapSec を超えた＝押し終わった
+                if (m5Pressing && now - lastFireTime > fireClusterGapSec)
+                {
+                    // この押しは長押しになっていない → 短押し扱いとしてNext()
+                    if (!m5LongTriggered)
+                    {
+                        Next();
+                    }
+
+                    // 状態リセット
+                    m5Pressing = false;
+                    m5PressDuration = 0f;
+                    m5LongTriggered = false;
+                }
             }
-            if (!isFire && m5Down) { m5Down = false; m5DownTime = 0f; }
 
             lastRaw = raw;
         }
